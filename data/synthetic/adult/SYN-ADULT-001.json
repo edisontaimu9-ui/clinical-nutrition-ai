@@ -225,7 +225,11 @@
   ],
   "expected": {
     "scope": "in_scope",
-    "gap_elements": [],
+    "gap_elements": [
+      "clin.critical_illness",
+      "clin.on_dialysis",
+      "clin.on_enteral_or_parenteral_feeding"
+    ],
     "calculations": {
       "bmi": "22.86",
       "pct_weight_change_vs_previous": "-0.71",

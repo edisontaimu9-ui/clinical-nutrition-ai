@@ -41,4 +41,7 @@ INSERT INTO clinical.data_element_def
   ('paed.length_height_cm', 'anthropometry', 'Length or height (paediatric)', 'numeric', 'cm', 30, 200, 30, 0.5, NULL, false, false, ARRAY['paediatric_general', 'paediatric_sam']::text[], NULL, NULL),
   ('paed.muac_cm', 'anthropometry', 'Mid-upper arm circumference (paediatric)', 'numeric', 'cm', 5, 30, 14, 0.2, NULL, false, false, ARRAY['paediatric_general', 'paediatric_sam']::text[], NULL, NULL),
   ('paed.bilateral_pitting_oedema_grade', 'clinical', 'Bilateral pitting oedema grade', 'coded', NULL, NULL, NULL, 3, NULL, ARRAY['none', '+', '++', '+++']::text[], false, false, ARRAY['paediatric_general', 'paediatric_sam']::text[], NULL, NULL),
-  ('paed.appetite_test', 'intake', 'Appetite test result', 'coded', NULL, NULL, NULL, 3, NULL, ARRAY['pass', 'fail']::text[], false, false, ARRAY['paediatric_sam']::text[], NULL, NULL);
+  ('paed.appetite_test', 'intake', 'Appetite test result', 'coded', NULL, NULL, NULL, 3, NULL, ARRAY['pass', 'fail']::text[], false, false, ARRAY['paediatric_sam']::text[], NULL, NULL),
+  ('clin.on_dialysis', 'clinical', 'On dialysis', 'boolean', NULL, NULL, NULL, 14, NULL, NULL, false, true, ARRAY['adult_general']::text[], NULL, NULL),
+  ('clin.on_enteral_or_parenteral_feeding', 'clinical', 'Receiving tube (enteral) or intravenous (parenteral) feeding', 'boolean', NULL, NULL, NULL, 14, NULL, NULL, false, true, ARRAY['adult_general']::text[], NULL, NULL),
+  ('clin.critical_illness', 'clinical', 'Critical illness (intensive or high-dependency care)', 'boolean', NULL, NULL, NULL, 14, NULL, NULL, false, true, ARRAY['adult_general']::text[], NULL, NULL);

@@ -1,4 +1,4 @@
-# Adult general pathway: rule set v0.1.0 (DRAFT)
+# Adult general pathway: rule set v0.2.0 (DRAFT)
 #
 # STATUS: draft. Prepared by engineering from the requirements for review by the product and clinical requirements
 # lead (D-019). Criticality levels, staleness windows (in packages/schemas/data_elements.json) and conflict tolerances
@@ -10,7 +10,7 @@
 # Sign-off: change `review_status` to author_approved ONLY after the lead has reviewed docs/clinical/rule-review-sheet.md.
 
 rule_set: adult_general_rules
-rule_set_version: "0.1.0"
+rule_set_version: "0.2.0"
 review_status: draft
 pathway: adult_general
 
@@ -49,10 +49,9 @@ completeness:
      why: "The diagnosis recorded by the treating team gives clinical context for the assessment."}
   - {id: CMP-016, version: "1", element: hist.comorbidities, criticality: important,
      why: "Relevant comorbidities give clinical context for the assessment."}
-  - {id: CMP-017, version: "1", element: anthro.muac_cm, criticality: optional,
-     why: "An additional anthropometric measure when weight or height cannot be obtained or is unreliable."}
-  - {id: CMP-018, version: "1", element: func.handgrip_strength_kg, criticality: optional,
-     why: "A functional measure that may support the assessment of muscle status."}
+  - {id: CMP-017, version: "2", element: anthro.muac_cm, criticality: important,
+     why: "A low-cost anthropometric measure that can be used when weight or height cannot be obtained or is unreliable."}
+  # CMP-018 retired in v0.2.0 (handgrip dynamometer is not routinely available in the target setting). Id is never reused. The element can still be recorded.
   - {id: CMP-019, version: "1", element: func.mobility_status, criticality: optional,
      why: "Mobility affects activity and body-composition interpretation."}
   - {id: CMP-020, version: "1", element: med.supplements, criticality: optional,
@@ -67,10 +66,14 @@ completeness:
      why: "A laboratory result that may support the assessment, if it has been measured."}
   - {id: CMP-025, version: "1", element: bio.potassium_mmol_l, criticality: optional,
      why: "A laboratory result that may support the assessment, if it has been measured."}
-  - {id: CMP-026, version: "1", element: bio.phosphate_mmol_l, criticality: optional,
-     why: "A laboratory result that may support the assessment, if it has been measured."}
-  - {id: CMP-027, version: "1", element: bio.magnesium_mmol_l, criticality: optional,
-     why: "A laboratory result that may support the assessment, if it has been measured."}
+  # CMP-026 retired in v0.2.0 (serum phosphate is not routinely available in the target setting). Id is never reused. The element can still be recorded.
+  # CMP-027 retired in v0.2.0 (serum magnesium is not routinely available in the target setting). Id is never reused. The element can still be recorded.
+  - {id: CMP-028, version: "1", element: clin.on_dialysis, criticality: optional,
+     why: "Dialysis changes how weight, fluid, intake and laboratory results are interpreted. This rule set does not yet adjust for it."}
+  - {id: CMP-029, version: "1", element: clin.on_enteral_or_parenteral_feeding, criticality: optional,
+     why: "Tube or intravenous feeding changes how intake is interpreted. This rule set does not yet adjust for it."}
+  - {id: CMP-030, version: "1", element: clin.critical_illness, criticality: optional,
+     why: "Critical illness changes how weight, intake and needs are interpreted. This rule set does not yet adjust for it."}
 
 conflicts:
   # Two or more live observations of one element on the same date that disagree (different status, or numeric values

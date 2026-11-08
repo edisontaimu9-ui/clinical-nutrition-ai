@@ -34,6 +34,7 @@ Status values: Proposed · Accepted · Superseded · Rejected.
 | D-020 | Instance data class enforced by the database and the engine (synthetic or real) | Proposed |
 | D-021 | Phase 1 deterministic core: catalogue as single source of truth, exact decimal arithmetic, no LLM | Proposed |
 | D-022 | Clinical sign-off is a recorded human act; software never marks content reviewed | Proposed |
+| D-023 | Setting priorities for Malawi: low-cost measures first; special circumstances recorded, pregnancy deferred | Proposed |
 
 ---
 
@@ -160,6 +161,12 @@ Status values: Proposed · Accepted · Superseded · Rejected.
 - **Decision:** Sign-off is recorded by the signer in `docs/clinical/rule-signoff.md`, and a rule set's `review_status` changes only after that. Engineering may prepare review material (the generated review sheet) but may not change a review status or mark reference cases verified. Until independent review is recorded, every report carries the "not independently reviewed" banner.
 - **Consequences:** Phase 1 can finish its engineering while the clinical exit items stay open and visible.
 - **Alternatives:** Engineering marks items approved on the owner's verbal consent (rejected: no record, no independence).
+
+## D-023 · Setting priorities for Malawi: low-cost measures first; special circumstances recorded, pregnancy deferred
+- **Context:** The target setting is resource-limited healthcare facilities in Malawi, where assessment relies on affordable, practical measures. On 2026-11-08 the owner confirmed the adult age band (18 years), the plausible ranges and the staleness windows, and delegated the remaining Phase 1 clinical choices to engineering as proposals, to be reviewed and signed by the owner.
+- **Decision:** Rule set v0.2.0: MUAC becomes `important` (low-cost, usable when weight or height cannot be obtained). Completeness rules for handgrip strength, serum phosphate and serum magnesium are retired (ids never reused); the elements can still be recorded. Dialysis, tube or intravenous feeding and critical illness are added as optional elements, are in scope, and their prompts state that the rules do not yet adjust for them (adjusting rules are future clinical work). Pregnancy and lactation remain refused by the adult pathway because they need their own reference values and reviewed logic; they are to be added as a separate planned pathway. Same-day weight tolerance stays at 0.5 kg, other conflict tolerances and the weight-change and energy decisions stay as proposed and deferred respectively.
+- **Consequences:** Gap lists fit the setting better. Nothing here is a clinical standard until the owner signs `docs/clinical/rule-signoff.md`. Special-circumstance patients get a visible limitation note rather than silent standard treatment.
+- **Alternatives:** Refuse special circumstances (rejected by owner: cover all); analyse pregnancy under the adult rules (rejected: unreviewed and unsafe to assume).
 
 ---
 

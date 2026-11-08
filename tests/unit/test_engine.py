@@ -210,3 +210,34 @@ def test_report_states_that_the_rules_are_not_independently_reviewed():
     report = run([])
     assert "not independently reviewed" in report["banner"]
     assert report["rule_set"]["review_status"] == "draft"
+
+
+def test_setting_priorities_muac_is_asked_for_and_equipment_dependent_items_are_not():
+    """Rule set v0.2.0 (proposal for the Malawi setting): MUAC is important; handgrip, phosphate and magnesium raise no gap."""
+    report = run([])
+    crit = {f["element_codes"][0]: f["criticality"] for f in findings(report, "gap")}
+    assert crit["anthro.muac_cm"] == "important"
+    for code in ("func.handgrip_strength_kg", "bio.phosphate_mmol_l", "bio.magnesium_mmol_l"):
+        assert code not in crit
+    # they can still be recorded and are treated as ordinary elements
+    report = run([o("g", "func.handgrip_strength_kg", 25, "kg")])
+    assert report["element_states"]["func.handgrip_strength_kg"]["state"] == "present"
+
+
+def test_special_circumstances_are_recorded_not_refused_and_the_limit_is_stated():
+    """Dialysis, tube/IV feeding and critical illness are in scope, and the prompt says the rules do not adjust for them."""
+    for code in ("clin.on_dialysis", "clin.on_enteral_or_parenteral_feeding", "clin.critical_illness"):
+        report = run([o("x", code, True)])
+        assert report["scope"]["status"] == "in_scope"
+        assert report["element_states"][code]["state"] == "present"
+        gap = [f for f in findings(report, "gap") if code in f["element_codes"]]
+        assert gap == []  # recorded, so no gap
+        report = run([])
+        text = [f["message"] for f in findings(report, "gap") if code in f["element_codes"]]
+        assert text and "not yet adjust" in text[0]
+
+
+def test_retired_rule_ids_are_never_reused():
+    ids = [r["id"] for r in rules().raw["completeness"]]
+    assert len(ids) == len(set(ids))
+    assert not {"CMP-018", "CMP-026", "CMP-027"} & set(ids)

@@ -3,45 +3,461 @@
   "version": "0.1.0",
   "review_status": "draft",
   "elements": [
-    {"element_code": "anthro.weight_kg", "domain": "anthropometry", "label": "Body weight", "value_type": "numeric", "canonical_unit": "kg", "plausible_min": 25, "plausible_max": 400, "staleness_days": 14, "conflict_tolerance": 0.5, "pathways": ["adult_general"]},
-    {"element_code": "anthro.height_cm", "domain": "anthropometry", "label": "Standing height", "value_type": "numeric", "canonical_unit": "cm", "plausible_min": 100, "plausible_max": 230, "staleness_days": 3650, "conflict_tolerance": 1, "pathways": ["adult_general"]},
-    {"element_code": "anthro.usual_weight_kg", "domain": "anthropometry", "label": "Usual body weight (reported)", "value_type": "numeric", "canonical_unit": "kg", "plausible_min": 25, "plausible_max": 400, "staleness_days": 365, "conflict_tolerance": 0.5, "undated_ok": true, "pathways": ["adult_general"]},
-    {"element_code": "anthro.muac_cm", "domain": "anthropometry", "label": "Mid-upper arm circumference", "value_type": "numeric", "canonical_unit": "cm", "plausible_min": 10, "plausible_max": 50, "staleness_days": 30, "conflict_tolerance": 0.5, "pathways": ["adult_general"]},
-
-    {"element_code": "bio.haemoglobin_g_dl", "domain": "biochemical", "label": "Haemoglobin", "value_type": "numeric", "canonical_unit": "g/dL", "plausible_min": 2, "plausible_max": 25, "staleness_days": 14, "conflict_tolerance": 0.2, "pathways": ["adult_general"]},
-    {"element_code": "bio.glucose_mmol_l", "domain": "biochemical", "label": "Blood glucose", "value_type": "numeric", "canonical_unit": "mmol/L", "plausible_min": 0.5, "plausible_max": 60, "staleness_days": 3, "conflict_tolerance": 0.3, "pathways": ["adult_general"]},
-    {"element_code": "bio.creatinine_umol_l", "domain": "biochemical", "label": "Serum creatinine", "value_type": "numeric", "canonical_unit": "umol/L", "plausible_min": 10, "plausible_max": 2000, "staleness_days": 14, "conflict_tolerance": 5, "pathways": ["adult_general"]},
-    {"element_code": "bio.potassium_mmol_l", "domain": "biochemical", "label": "Serum potassium", "value_type": "numeric", "canonical_unit": "mmol/L", "plausible_min": 1.5, "plausible_max": 9, "staleness_days": 7, "conflict_tolerance": 0.2, "pathways": ["adult_general"]},
-    {"element_code": "bio.phosphate_mmol_l", "domain": "biochemical", "label": "Serum phosphate", "value_type": "numeric", "canonical_unit": "mmol/L", "plausible_min": 0.1, "plausible_max": 5, "staleness_days": 7, "conflict_tolerance": 0.1, "pathways": ["adult_general"]},
-    {"element_code": "bio.magnesium_mmol_l", "domain": "biochemical", "label": "Serum magnesium", "value_type": "numeric", "canonical_unit": "mmol/L", "plausible_min": 0.1, "plausible_max": 4, "staleness_days": 7, "conflict_tolerance": 0.1, "pathways": ["adult_general"]},
-
-    {"element_code": "clin.oedema_present", "domain": "clinical", "label": "Oedema present", "value_type": "boolean", "staleness_days": 7, "pathways": ["adult_general"]},
-    {"element_code": "clin.nfpe_muscle_wasting", "domain": "clinical", "label": "Nutrition-focused physical finding: muscle wasting", "value_type": "coded", "allowed_values": ["none", "mild", "moderate", "severe"], "staleness_days": 14, "pathways": ["adult_general"]},
-    {"element_code": "clin.nfpe_subcutaneous_fat_loss", "domain": "clinical", "label": "Nutrition-focused physical finding: subcutaneous fat loss", "value_type": "coded", "allowed_values": ["none", "mild", "moderate", "severe"], "staleness_days": 14, "pathways": ["adult_general"]},
-    {"element_code": "clin.dysphagia_symptoms", "domain": "clinical", "label": "Swallowing difficulty reported or observed", "value_type": "boolean", "staleness_days": 14, "pathways": ["adult_general"]},
-    {"element_code": "clin.gi_symptoms", "domain": "clinical", "label": "Gastrointestinal symptoms (free text)", "value_type": "text", "staleness_days": 7, "pathways": ["adult_general"]},
-
-    {"element_code": "intake.npo_status", "domain": "intake", "label": "Nil by mouth (NPO) currently", "value_type": "boolean", "staleness_days": 2, "pathways": ["adult_general"]},
-    {"element_code": "intake.oral_intake_percent_usual", "domain": "intake", "label": "Recent oral intake as percent of usual", "value_type": "numeric", "canonical_unit": "percent", "plausible_min": 0, "plausible_max": 150, "staleness_days": 3, "conflict_tolerance": 5, "pathways": ["adult_general"]},
-    {"element_code": "intake.appetite", "domain": "intake", "label": "Appetite", "value_type": "coded", "allowed_values": ["normal", "reduced", "poor", "none"], "staleness_days": 3, "pathways": ["adult_general"]},
-    {"element_code": "intake.diet_history_summary", "domain": "intake", "label": "Diet history summary (free text)", "value_type": "text", "staleness_days": 14, "pathways": ["adult_general"]},
-
-    {"element_code": "func.handgrip_strength_kg", "domain": "functional", "label": "Handgrip strength", "value_type": "numeric", "canonical_unit": "kg", "plausible_min": 0, "plausible_max": 100, "staleness_days": 30, "conflict_tolerance": 2, "pathways": ["adult_general"]},
-    {"element_code": "func.mobility_status", "domain": "functional", "label": "Mobility status", "value_type": "coded", "allowed_values": ["independent", "assisted", "bedbound"], "staleness_days": 14, "pathways": ["adult_general"]},
-
-    {"element_code": "med.current_medications", "domain": "medication", "label": "Current medications (free text)", "value_type": "text", "staleness_days": 14, "pathways": ["adult_general"]},
-    {"element_code": "med.supplements", "domain": "medication", "label": "Supplements (free text)", "value_type": "text", "staleness_days": 30, "pathways": ["adult_general"]},
-
-    {"element_code": "hist.primary_diagnosis", "domain": "history", "label": "Primary medical diagnosis as recorded by the treating team (free text)", "value_type": "text", "pathways": ["adult_general"]},
-    {"element_code": "hist.comorbidities", "domain": "history", "label": "Relevant comorbidities as recorded (free text)", "value_type": "text", "pathways": ["adult_general"]},
-    {"element_code": "hist.pregnancy_lactation_status", "domain": "history", "label": "Pregnancy or lactation status", "value_type": "coded", "allowed_values": ["not_pregnant_or_lactating", "pregnant", "lactating"], "staleness_days": 30, "pathways": ["adult_general"]},
-
-    {"element_code": "soc.food_insecurity_concern", "domain": "social", "label": "Food access or food insecurity concern", "value_type": "boolean", "staleness_days": 90, "pathways": ["adult_general"]},
-
-    {"element_code": "paed.weight_kg", "domain": "anthropometry", "label": "Body weight (paediatric)", "value_type": "numeric", "canonical_unit": "kg", "plausible_min": 1, "plausible_max": 150, "staleness_days": 7, "conflict_tolerance": 0.1, "enabled": false, "pathways": ["paediatric_general", "paediatric_sam"]},
-    {"element_code": "paed.length_height_cm", "domain": "anthropometry", "label": "Length or height (paediatric)", "value_type": "numeric", "canonical_unit": "cm", "plausible_min": 30, "plausible_max": 200, "staleness_days": 30, "conflict_tolerance": 0.5, "enabled": false, "pathways": ["paediatric_general", "paediatric_sam"]},
-    {"element_code": "paed.muac_cm", "domain": "anthropometry", "label": "Mid-upper arm circumference (paediatric)", "value_type": "numeric", "canonical_unit": "cm", "plausible_min": 5, "plausible_max": 30, "staleness_days": 14, "conflict_tolerance": 0.2, "enabled": false, "pathways": ["paediatric_general", "paediatric_sam"]},
-    {"element_code": "paed.bilateral_pitting_oedema_grade", "domain": "clinical", "label": "Bilateral pitting oedema grade", "value_type": "coded", "allowed_values": ["none", "+", "++", "+++"], "staleness_days": 3, "enabled": false, "pathways": ["paediatric_general", "paediatric_sam"]},
-    {"element_code": "paed.appetite_test", "domain": "intake", "label": "Appetite test result", "value_type": "coded", "allowed_values": ["pass", "fail"], "staleness_days": 3, "enabled": false, "pathways": ["paediatric_sam"]}
+    {
+      "element_code": "anthro.weight_kg",
+      "domain": "anthropometry",
+      "label": "Body weight",
+      "value_type": "numeric",
+      "canonical_unit": "kg",
+      "plausible_min": 25,
+      "plausible_max": 400,
+      "staleness_days": 14,
+      "conflict_tolerance": 0.5,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "anthro.height_cm",
+      "domain": "anthropometry",
+      "label": "Standing height",
+      "value_type": "numeric",
+      "canonical_unit": "cm",
+      "plausible_min": 100,
+      "plausible_max": 230,
+      "staleness_days": 3650,
+      "conflict_tolerance": 1,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "anthro.usual_weight_kg",
+      "domain": "anthropometry",
+      "label": "Usual body weight (reported)",
+      "value_type": "numeric",
+      "canonical_unit": "kg",
+      "plausible_min": 25,
+      "plausible_max": 400,
+      "staleness_days": 365,
+      "conflict_tolerance": 0.5,
+      "undated_ok": true,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "anthro.muac_cm",
+      "domain": "anthropometry",
+      "label": "Mid-upper arm circumference",
+      "value_type": "numeric",
+      "canonical_unit": "cm",
+      "plausible_min": 10,
+      "plausible_max": 50,
+      "staleness_days": 30,
+      "conflict_tolerance": 0.5,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "bio.haemoglobin_g_dl",
+      "domain": "biochemical",
+      "label": "Haemoglobin",
+      "value_type": "numeric",
+      "canonical_unit": "g/dL",
+      "plausible_min": 2,
+      "plausible_max": 25,
+      "staleness_days": 14,
+      "conflict_tolerance": 0.2,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "bio.glucose_mmol_l",
+      "domain": "biochemical",
+      "label": "Blood glucose",
+      "value_type": "numeric",
+      "canonical_unit": "mmol/L",
+      "plausible_min": 0.5,
+      "plausible_max": 60,
+      "staleness_days": 3,
+      "conflict_tolerance": 0.3,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "bio.creatinine_umol_l",
+      "domain": "biochemical",
+      "label": "Serum creatinine",
+      "value_type": "numeric",
+      "canonical_unit": "umol/L",
+      "plausible_min": 10,
+      "plausible_max": 2000,
+      "staleness_days": 14,
+      "conflict_tolerance": 5,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "bio.potassium_mmol_l",
+      "domain": "biochemical",
+      "label": "Serum potassium",
+      "value_type": "numeric",
+      "canonical_unit": "mmol/L",
+      "plausible_min": 1.5,
+      "plausible_max": 9,
+      "staleness_days": 7,
+      "conflict_tolerance": 0.2,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "bio.phosphate_mmol_l",
+      "domain": "biochemical",
+      "label": "Serum phosphate",
+      "value_type": "numeric",
+      "canonical_unit": "mmol/L",
+      "plausible_min": 0.1,
+      "plausible_max": 5,
+      "staleness_days": 7,
+      "conflict_tolerance": 0.1,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "bio.magnesium_mmol_l",
+      "domain": "biochemical",
+      "label": "Serum magnesium",
+      "value_type": "numeric",
+      "canonical_unit": "mmol/L",
+      "plausible_min": 0.1,
+      "plausible_max": 4,
+      "staleness_days": 7,
+      "conflict_tolerance": 0.1,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "clin.oedema_present",
+      "domain": "clinical",
+      "label": "Oedema present",
+      "value_type": "boolean",
+      "staleness_days": 7,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "clin.nfpe_muscle_wasting",
+      "domain": "clinical",
+      "label": "Nutrition-focused physical finding: muscle wasting",
+      "value_type": "coded",
+      "allowed_values": [
+        "none",
+        "mild",
+        "moderate",
+        "severe"
+      ],
+      "staleness_days": 14,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "clin.nfpe_subcutaneous_fat_loss",
+      "domain": "clinical",
+      "label": "Nutrition-focused physical finding: subcutaneous fat loss",
+      "value_type": "coded",
+      "allowed_values": [
+        "none",
+        "mild",
+        "moderate",
+        "severe"
+      ],
+      "staleness_days": 14,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "clin.dysphagia_symptoms",
+      "domain": "clinical",
+      "label": "Swallowing difficulty reported or observed",
+      "value_type": "boolean",
+      "staleness_days": 14,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "clin.gi_symptoms",
+      "domain": "clinical",
+      "label": "Gastrointestinal symptoms (free text)",
+      "value_type": "text",
+      "staleness_days": 7,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "intake.npo_status",
+      "domain": "intake",
+      "label": "Nil by mouth (NPO) currently",
+      "value_type": "boolean",
+      "staleness_days": 2,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "intake.oral_intake_percent_usual",
+      "domain": "intake",
+      "label": "Recent oral intake as percent of usual",
+      "value_type": "numeric",
+      "canonical_unit": "percent",
+      "plausible_min": 0,
+      "plausible_max": 150,
+      "staleness_days": 3,
+      "conflict_tolerance": 5,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "intake.appetite",
+      "domain": "intake",
+      "label": "Appetite",
+      "value_type": "coded",
+      "allowed_values": [
+        "normal",
+        "reduced",
+        "poor",
+        "none"
+      ],
+      "staleness_days": 3,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "intake.diet_history_summary",
+      "domain": "intake",
+      "label": "Diet history summary (free text)",
+      "value_type": "text",
+      "staleness_days": 14,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "func.handgrip_strength_kg",
+      "domain": "functional",
+      "label": "Handgrip strength",
+      "value_type": "numeric",
+      "canonical_unit": "kg",
+      "plausible_min": 0,
+      "plausible_max": 100,
+      "staleness_days": 30,
+      "conflict_tolerance": 2,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "func.mobility_status",
+      "domain": "functional",
+      "label": "Mobility status",
+      "value_type": "coded",
+      "allowed_values": [
+        "independent",
+        "assisted",
+        "bedbound"
+      ],
+      "staleness_days": 14,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "med.current_medications",
+      "domain": "medication",
+      "label": "Current medications (free text)",
+      "value_type": "text",
+      "staleness_days": 14,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "med.supplements",
+      "domain": "medication",
+      "label": "Supplements (free text)",
+      "value_type": "text",
+      "staleness_days": 30,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "hist.primary_diagnosis",
+      "domain": "history",
+      "label": "Primary medical diagnosis as recorded by the treating team (free text)",
+      "value_type": "text",
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "hist.comorbidities",
+      "domain": "history",
+      "label": "Relevant comorbidities as recorded (free text)",
+      "value_type": "text",
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "hist.pregnancy_lactation_status",
+      "domain": "history",
+      "label": "Pregnancy or lactation status",
+      "value_type": "coded",
+      "allowed_values": [
+        "not_pregnant_or_lactating",
+        "pregnant",
+        "lactating"
+      ],
+      "staleness_days": 30,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "soc.food_insecurity_concern",
+      "domain": "social",
+      "label": "Food access or food insecurity concern",
+      "value_type": "boolean",
+      "staleness_days": 90,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "paed.weight_kg",
+      "domain": "anthropometry",
+      "label": "Body weight (paediatric)",
+      "value_type": "numeric",
+      "canonical_unit": "kg",
+      "plausible_min": 1,
+      "plausible_max": 150,
+      "staleness_days": 7,
+      "conflict_tolerance": 0.1,
+      "enabled": false,
+      "pathways": [
+        "paediatric_general",
+        "paediatric_sam"
+      ]
+    },
+    {
+      "element_code": "paed.length_height_cm",
+      "domain": "anthropometry",
+      "label": "Length or height (paediatric)",
+      "value_type": "numeric",
+      "canonical_unit": "cm",
+      "plausible_min": 30,
+      "plausible_max": 200,
+      "staleness_days": 30,
+      "conflict_tolerance": 0.5,
+      "enabled": false,
+      "pathways": [
+        "paediatric_general",
+        "paediatric_sam"
+      ]
+    },
+    {
+      "element_code": "paed.muac_cm",
+      "domain": "anthropometry",
+      "label": "Mid-upper arm circumference (paediatric)",
+      "value_type": "numeric",
+      "canonical_unit": "cm",
+      "plausible_min": 5,
+      "plausible_max": 30,
+      "staleness_days": 14,
+      "conflict_tolerance": 0.2,
+      "enabled": false,
+      "pathways": [
+        "paediatric_general",
+        "paediatric_sam"
+      ]
+    },
+    {
+      "element_code": "paed.bilateral_pitting_oedema_grade",
+      "domain": "clinical",
+      "label": "Bilateral pitting oedema grade",
+      "value_type": "coded",
+      "allowed_values": [
+        "none",
+        "+",
+        "++",
+        "+++"
+      ],
+      "staleness_days": 3,
+      "enabled": false,
+      "pathways": [
+        "paediatric_general",
+        "paediatric_sam"
+      ]
+    },
+    {
+      "element_code": "paed.appetite_test",
+      "domain": "intake",
+      "label": "Appetite test result",
+      "value_type": "coded",
+      "allowed_values": [
+        "pass",
+        "fail"
+      ],
+      "staleness_days": 3,
+      "enabled": false,
+      "pathways": [
+        "paediatric_sam"
+      ]
+    },
+    {
+      "element_code": "clin.on_dialysis",
+      "label": "On dialysis",
+      "domain": "clinical",
+      "value_type": "boolean",
+      "staleness_days": 14,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "clin.on_enteral_or_parenteral_feeding",
+      "label": "Receiving tube (enteral) or intravenous (parenteral) feeding",
+      "domain": "clinical",
+      "value_type": "boolean",
+      "staleness_days": 14,
+      "pathways": [
+        "adult_general"
+      ]
+    },
+    {
+      "element_code": "clin.critical_illness",
+      "label": "Critical illness (intensive or high-dependency care)",
+      "domain": "clinical",
+      "value_type": "boolean",
+      "staleness_days": 14,
+      "pathways": [
+        "adult_general"
+      ]
+    }
   ]
 }
