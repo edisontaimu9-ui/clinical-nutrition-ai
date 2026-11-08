@@ -1,6 +1,6 @@
 # Requirements
 
-Version 0.1 · Status: **Draft for approval** · Phase 0
+Version 0.2 · Status: **Draft for approval** · Phase 0 (updated for decisions D-017, D-018, D-019)
 
 Priority uses MoSCoW: **M** must, **S** should, **C** could. "Phase" is the roadmap phase in which the requirement is first delivered ([`docs/ROADMAP.md`](docs/ROADMAP.md)). IDs are stable; never reuse one.
 
@@ -12,7 +12,8 @@ Priority uses MoSCoW: **M** must, **S** should, **C** could. "Phase" is the road
 |---|---|
 | Dietitian / nutrition clinician | Primary user. Reviews, edits, approves or rejects drafts. |
 | Supervising clinician | Co-signs outputs of trainees or provisionally-licensed users where required. |
-| Clinical safety lead | Owns clinical rules, hazard log and release sign-off. |
+| Product and clinical requirements lead | Project owner. Owns scope, priorities and clinical requirements; authors clinical content. |
+| Independent clinical safety reviewer | Independent senior clinical dietitian/nutrition professional. Reviews clinical logic, hazard log and release safety before any clinical deployment. Role may be vacant until appointed (D-019). |
 | Administrator | Manages users and configuration. **No** access to patient content. |
 | Auditor | Read-only access to audit trail. |
 | Engineer / ML engineer | Works with **synthetic data only**. |
@@ -20,13 +21,14 @@ Priority uses MoSCoW: **M** must, **S** should, **C** could. "Phase" is the road
 **Assumptions**
 
 - A1. Assessment data is entered or imported by a clinician; the agent does not interview patients.
-- A2. Inference runs on infrastructure under the project's control (on-premises, private cloud or a hosted environment covered by an approved legal and privacy framework).
+- A2. During development, inference may use hosted LLM APIs with **synthetic data only**. Any instance handling real patient data must use local/self-hosted inference or a hosted environment covered by an approved legal and privacy framework (D-017).
 - A3. Primary language is English. Chichewa and other languages are out of scope until clinically validated.
 - A4. Deployment settings may be low-resource (limited bandwidth, intermittent power); the design must not assume always-on high-speed connectivity.
+- A5. Development is done from a phone/terminal environment without GPU hardware; CI and remote infrastructure do the heavy work (D-015).
 
 **Out of scope (initial release)**
 
-Medical diagnosis; prescribing of drugs, diets, enteral or parenteral formulas; drug dosing; emergency triage; direct patient-facing advice; image-based assessment; autonomous charting into an external EHR; any use with real identifiable data before Phase 7 approvals.
+Medical diagnosis; prescribing of drugs, diets, enteral or parenteral formulas; drug dosing; emergency triage; direct patient-facing advice; image-based assessment; autonomous charting into an external EHR; paediatric and severe acute malnutrition (SAM) assessment in the initial release (planned: the data model supports them, but those pathways stay inactive until clinically validated, see FR-POP); any use with real identifiable data before Phase 7 approvals.
 
 ## 2. Functional requirements
 
@@ -130,6 +132,25 @@ Medical diagnosis; prescribing of drugs, diets, enteral or parenteral formulas; 
 | FR-ADM-02 | Configuration of rules, prompts, models and KB versions is versioned and traceable to each output. | M | 3 |
 | FR-ADM-03 | An emergency "kill switch" disables AI generation while leaving the rest of the record accessible. | S | 5 |
 
+### 2.11 Population pathways (FR-POP)
+
+| ID | Requirement | P | Phase |
+|---|---|---|---|
+| FR-POP-01 | A pathway registry lists each pathway with status (`active`, `planned`, `retired`), age band, and the rule and KB versions it requires. Initially `adult_general` is active; `paediatric_general` and `paediatric_sam` are planned. | M | 1 |
+| FR-POP-02 | Encounters, analyses and drafts can be created only for `active` pathways and only when the patient's age is inside the pathway's band. Requests for planned pathways, or children presented to the adult pathway, are refused with an explanatory message, never handled "best effort". | M | 1 |
+| FR-POP-03 | The data model stores age in months and sex, and the element catalogue defines population-specific elements (for example MUAC, bilateral oedema, weight-for-height/length z-scores, appetite assessment), disabled until their pathway is active. | M | 1 |
+| FR-POP-04 | Growth and classification reference standards are stored as versioned, cited reference data (not hard-coded), so paediatric and SAM calculators can be added without a breaking schema change. | S | 1 |
+| FR-POP-05 | Activating a pathway requires meeting the criteria in CLINICAL_SAFETY.md §2.4 and recording the activation in the decision log. | M | 8–9 |
+
+### 2.12 Clinical governance (FR-GOV)
+
+| ID | Requirement | P | Phase |
+|---|---|---|---|
+| FR-GOV-01 | Governance roles (product and clinical requirements lead; independent clinical safety reviewer; privacy/security lead) are configurable assignments with status `assigned` or `vacant`; no role is hard-coded to a person. | M | 1 |
+| FR-GOV-02 | Every clinical rule, red-flag rule, ADIME template and KB source has a review status: `draft`, `author_approved` or `independently_reviewed`. An author cannot record the independent review of their own item. | M | 1 |
+| FR-GOV-03 | An instance in clinical mode (real data, or any use in care) refuses to start unless the independent clinical safety reviewer role is assigned and all active rules and KB sources are `independently_reviewed`. | M | 2 |
+| FR-GOV-04 | While the reviewer role is vacant, outputs display "clinical logic not independently reviewed" and the system refuses real-data mode. | M | 5 |
+
 ## 3. Non-functional requirements
 
 ### 3.1 Safety and quality (NFR-SAF)
@@ -151,11 +172,13 @@ Detailed controls are in [`SECURITY.md`](SECURITY.md).
 | NFR-SEC-01 | Encryption in transit (TLS 1.2+, 1.3 preferred) for all connections, including internal service links. | M |
 | NFR-SEC-02 | Encryption at rest for databases, backups and object storage; field-level encryption for direct identifiers. | M |
 | NFR-SEC-03 | Least-privilege authorisation enforced in the application **and** in PostgreSQL (row-level security). | M |
-| NFR-SEC-04 | No identifiable patient data leaves the trust boundary to external AI services without an approved legal and privacy framework. Egress is blocked by default and tested. | M |
+| NFR-SEC-04 | No identifiable patient data leaves the trust boundary to external AI services without an approved legal and privacy framework. Egress is blocked by default; the only permitted AI egress is the hosted-LLM path of synthetic-only instances (NFR-SEC-09). Tested. | M |
 | NFR-SEC-05 | Multi-factor authentication for all human users with access to patient data. | M |
 | NFR-SEC-06 | Secrets are never stored in the repository; automated secret scanning in CI. | M |
 | NFR-SEC-07 | Development, test and CI environments contain synthetic data only. | M |
 | NFR-SEC-08 | LLM-specific threats (prompt injection, data leakage, insecure output handling) have documented mitigations and tests. | M |
+| NFR-SEC-09 | Hosted LLM backends are usable only in instances whose recorded data class is `synthetic`, verified at start-up and on every request, restricted to an endpoint allow-list; real-data builds exclude hosted adapters at build time. | M |
+| NFR-SEC-10 | Provider API keys are scoped, spend-limited and stored only in a secret store or permission-restricted file or environment outside the repository (never in committed files, shell history, logs or chat); they are rotated on suspected exposure. | M |
 
 ### 3.3 Performance and reliability (NFR-PERF / NFR-REL)
 
@@ -163,7 +186,7 @@ Detailed controls are in [`SECURITY.md`](SECURITY.md).
 |---|---|---|
 | NFR-PERF-01 | Deterministic completeness and calculation results return in under 2 seconds at the 95th percentile for a single case (proposed target, to be validated). | S |
 | NFR-PERF-02 | An ADIME draft completes within a bounded time (proposed: under 120 seconds on reference hardware) and shows progress; the clinician can continue other work meanwhile. | S |
-| NFR-PERF-03 | Inference must run on commodity or modest GPU/CPU hardware; minimum hardware tiers are defined during the Phase 3 bake-off. | S |
+| NFR-PERF-03 | Local inference (mode L) must run on commodity or modest GPU/CPU hardware; minimum hardware tiers are defined once a hardware or server decision is made (Q-05). | S |
 | NFR-REL-01 | Recovery point objective and recovery time objective are defined and tested via restore drills (targets set by the clinical sponsor). | M |
 | NFR-REL-02 | Graceful degradation: the rest of the application works if inference is down. | M |
 | NFR-REL-03 | Intermittent connectivity: clinician UI tolerates reconnects without data loss (draft autosave). | S |
@@ -198,10 +221,26 @@ Detailed controls are in [`SECURITY.md`](SECURITY.md).
 | NFR-GOV-03 | Ethics approval is obtained before any study using real or de-identified patient data. | M |
 | NFR-GOV-04 | Regulatory classification of the system is assessed and documented before clinical deployment. | M |
 
+### 3.7 Architecture and model independence (NFR-ARC)
+
+| ID | Requirement | P |
+|---|---|---|
+| NFR-ARC-01 | All model calls pass through one provider-neutral gateway interface. Switching backend (mock, hosted, local) is a configuration change plus an evaluation run, with no change to rules, calculators, schemas or the review workflow. | M |
+| NFR-ARC-02 | Provider SDKs appear only inside adapter packages; CI enforces this. | M |
+| NFR-ARC-03 | Provider, model identifier and version or snapshot are pinned in configuration and recorded for every run; a version change triggers the regression and safety suites. | M |
+| NFR-ARC-04 | Structured output is validated by the project's own schema validator regardless of provider-native structured-output support. | M |
+| NFR-ARC-05 | The evaluation harness runs unchanged against every backend and reports results per backend; results do not transfer between backends. | M |
+| NFR-ARC-06 | A deterministic mock backend lets the full test suite run in CI with no network access or API spend. | M |
+
 ## 4. Traceability
 
 Each requirement ID is referenced by tests (`tests/**`) and by the roadmap exit criteria. A traceability matrix (requirement → design element → test → evidence) is created in Phase 1 and maintained thereafter.
 
 ## 5. Acceptance of Phase 0
 
-Phase 0 is accepted when the project owner and clinical lead confirm: requirements are complete and correctly prioritised; out-of-scope items are agreed; open questions in the decision log are answered or consciously deferred.
+Phase 0 is accepted when the project owner confirms (the independent clinical safety reviewer role may remain vacant, per D-019): requirements are complete and correctly prioritised; out-of-scope items are agreed; open questions in the decision log are answered or consciously deferred.
+
+## 6. Change log
+
+- **v0.2** — Added population pathways (FR-POP), clinical governance (FR-GOV) and architecture/model-independence (NFR-ARC) requirements; added NFR-SEC-09 and NFR-SEC-10; clarified A2, A5, NFR-SEC-04 and NFR-PERF-03; updated roles. Driven by decisions D-017, D-018 and D-019.
+- **v0.1** — Initial draft.

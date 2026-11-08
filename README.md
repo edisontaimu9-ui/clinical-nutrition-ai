@@ -1,6 +1,6 @@
 # Clinical Nutrition AI Agent
 
-> **Status: Phase 0 — foundations and documentation only.**
+> **Status: Phase 0 (v0.2) — foundations and documentation only; awaiting owner approval.**
 > No application code exists yet. This project is **not** a medical device, is **not** approved for clinical use, and must be developed with **synthetic data only** until the gates in [`docs/ROADMAP.md`](docs/ROADMAP.md) are passed.
 
 ## Purpose
@@ -23,7 +23,13 @@ The agent is a **drafting and checking assistant**. The clinician remains the de
 | Draft ADIME text where every statement traces to an input or a cited source | Fabricates findings, laboratory results or references |
 | Suggest candidate nutrition diagnoses and interventions as drafts | Diagnoses a disease or prescribes treatment, diets, feeds or drugs on its own |
 | Label all AI content and its uncertainty | Presents drafts as approved or final |
-| Run on infrastructure you control with open-weight models | Sends identifiable patient data to external AI services without an approved legal and privacy framework |
+| Keep identifiable data on infrastructure you control (hosted LLM APIs only with synthetic data during development) | Sends identifiable patient data to external AI services without an approved legal and privacy framework |
+
+## Scope and key decisions (v0.2)
+
+- **Population:** adult nutrition assessment first. Paediatric and severe acute malnutrition (SAM) pathways are planned: the data model is ready for them, but they stay inactive and are refused until separately validated (D-018).
+- **Models:** model-independent design. Development starts on hosted LLM APIs with **synthetic data only**; local or approved-framework inference is required before any real patient data (D-017).
+- **Clinical governance:** the project owner leads product and clinical requirements. An independent senior clinical dietitian/nutrition professional must review the clinical logic before any clinical deployment; the role is configurable and currently vacant (D-019).
 
 ## Non-negotiable safety rules
 
@@ -93,13 +99,15 @@ clinical-nutrition-ai/
 | Phase | Theme | Gate to pass before moving on |
 |---|---|---|
 | **0** | Requirements, architecture, safety and security design | Written approval of Phase 0 documents |
-| 1 | Data model, synthetic data, deterministic core (calculators, completeness rules) | Deterministic outputs match clinician-verified reference cases |
+| 1 | Data model (population-ready), synthetic data, deterministic core for adults (calculators, completeness rules) | Deterministic outputs match clinician-verified reference cases; planned pathways refused |
 | 2 | Security and audit baseline | Security checklist passes; audit chain verified |
-| 3 | Local LLM gateway, evaluation harness, model bake-off | Model selected on synthetic benchmark |
+| 3 | Provider-neutral LLM gateway (mock + hosted, synthetic only), evaluation harness, backend bake-off | Backends selected on synthetic benchmark; hosted-gate tests pass |
 | 4 | Curated knowledge base and citation verification | 100% of citations resolve to KB entries |
 | 5 | Agent workflow (completeness → conflicts → ADIME → interventions → verifier) | Safety test suite passes with zero critical failures |
 | 6 | Clinician review UI and approval workflow | Usability and workflow sign-off |
-| 7 | Clinical evaluation and supervised shadow-mode study | Clinical lead and ethics/privacy approvals |
+| 7 | Clinical evaluation and supervised shadow-mode study (adult) | Independent clinical safety reviewer, ethics and privacy approvals; real-data inference mode ready |
+| 8 | Paediatric pathway activation | Activation criteria in CLINICAL_SAFETY.md §2.4 met |
+| 9 | SAM pathway activation | Same as Phase 8 |
 
 Only one phase is worked at a time. Each phase ends with validation and an explicit approval.
 

@@ -1,8 +1,8 @@
 # Clinical Safety
 
-Version 0.1 · Status: **Draft for approval** · Phase 0
+Version 0.2 · Status: **Draft for approval** · Phase 0 (updated for decisions D-017, D-018, D-019)
 
-This document defines the intended use, clinical scope and limits of the system, the hazard analysis, how each safety rule is enforced, and the human-in-the-loop approval workflow. It is a design document, not a regulatory submission. A named **clinical safety lead** must own it; until one is appointed this document is unapproved.
+This document defines the intended use, clinical scope and limits of the system, the hazard analysis, how each safety rule is enforced, and the human-in-the-loop approval workflow. It is a design document, not a regulatory submission. During development the product and clinical requirements lead (project owner) owns it. Before any clinical deployment an **independent clinical safety reviewer** must review and approve it (D-019). Until then it carries no claim of clinical validation.
 
 ## 1. Intended use
 
@@ -18,7 +18,7 @@ This document defines the intended use, clinical scope and limits of the system,
 
 | Area | Detail |
 |---|---|
-| Populations | To be confirmed by the clinical lead (see decision-log Q-01). Proposed start: **adult inpatient/outpatient** nutrition assessment. Paediatric growth and acute malnutrition pathways (high relevance in sub-Saharan settings) are a **separate, later scope increment** because they require growth standards, different thresholds and dedicated validation. |
+| Populations | **Initial release: adult (`adult_general`) nutrition assessment.** Paediatric (`paediatric_general`) and severe acute malnutrition (`paediatric_sam`) are planned: the data model supports them, but those pathways are registered as `planned`/inactive and the system refuses them until each is separately validated and activated (§2.4, D-018). |
 | Assessment domains | Anthropometry; biochemical data; clinical and nutrition-focused physical findings; food/nutrient intake and history; functional status; medications and supplements (as reported); relevant history; social and food-access context. |
 | Outputs | Completeness report; conflict report; ADIME draft with candidate nutrition diagnoses (PES); intervention options with citations; monitoring and evaluation prompts. |
 
@@ -34,6 +34,23 @@ This document defines the intended use, clinical scope and limits of the system,
 ### 2.3 Nutrition diagnosis vs. medical diagnosis
 
 In the nutrition care process, a *nutrition diagnosis* names a nutrition problem the dietitian is responsible for treating. It is a professional judgement distinct from a medical diagnosis. The agent may propose **candidate** nutrition diagnoses with evidence; the clinician determines whether any is adopted. The agent never states or implies a medical diagnosis (decision D-004).
+
+### 2.4 Pathway activation policy (adult first; paediatric and SAM later)
+
+Pathways are registered in the pathway registry as `planned`, `active` or `retired` (FR-POP-01). Initially `adult_general` is active; `paediatric_general` and `paediatric_sam` are planned. The system refuses encounters, analyses and drafts for planned pathways, including when a case's age or measurements indicate a child (age-band guard, FR-POP-02).
+
+A pathway moves from `planned` to `active` only when all of the following are met and recorded in the decision log:
+
+1. Scope statement: population, age band, settings and exclusions.
+2. Data elements, units, plausibility ranges and staleness windows defined and reviewed.
+3. Calculators built on cited reference standards and unit-tested against clinician-verified reference cases.
+4. Rules (gaps, conflicts, red flags) `independently_reviewed` (D-019).
+5. Knowledge-base sources curated, licence-checked and independently reviewed.
+6. Hazard-log addendum with tested mitigations.
+7. Pathway-specific synthetic evaluation set and expert-panel results meeting pre-set gates.
+8. Sign-off by the independent clinical safety reviewer.
+
+Points to address before activating the paediatric and SAM pathways (design prompts, not clinical guidance): age-band-specific thresholds and the growth standards adopted by national guidance; weight-based quantities, where small errors can have large consequences; clinician-authored red flags for medical complications that need urgent clinical attention (the system flags, it never manages); alignment with national guidelines; reliability of caregiver-reported data; and consistent age-in-months and unit handling.
 
 ## 3. Known limitations
 
@@ -54,9 +71,9 @@ In the nutrition care process, a *nutrition diagnosis* names a nutrition problem
 | 3 | Distinguish missing from normal | Five-state data-element model (§5); database check constraints; drafts may not assert a finding for a non-`present` element | `tests/safety/missing_not_normal` |
 | 4 | Flag uncertainty and conflicts | Mandatory uncertainty flag per item; conflict detector displays both values and sources; no auto-resolution | `tests/safety/conflicts_uncertainty` |
 | 5 | Clinician review before approval | State machine; approval requires authenticated human with permission; content hash bound to approval; trainees need co-sign | `tests/integration/approval_workflow` |
-| 6 | Synthetic data in development | Synthetic data generator; CI scanners for identifier patterns; policy in SECURITY.md | CI job `synthetic-only-check` |
+| 6 | Synthetic data in development | Generated, invented cases only; CI scanners for identifier patterns; synthetic means invented, never scrubbed from real records (SECURITY.md §7.2) | CI job `synthetic-only-check` |
 | 7 | Least privilege, encryption, audit | RBAC + RLS; encryption at rest and in transit; append-only hash-chained audit | `tests/integration/rls`, audit-verify tool |
-| 8 | No identifiable data to external AI | Local inference only by default; egress deny; PHI egress filter; configuration flag cannot enable external providers without a recorded approval reference | `tests/safety/egress_block` |
+| 8 | No identifiable data to external AI | Hosted LLM APIs only in synthetic-only instances (data-class gate, per-request synthetic check, build exclusion); local inference or an approved framework for real data; egress deny elsewhere; identifier-pattern filter (SECURITY.md §7) | `tests/safety/egress_block`, `tests/safety/hosted_gate` |
 
 ## 5. Data-state model and uncertainty taxonomy
 
@@ -158,9 +175,12 @@ Severity: **C**ritical, **H**igh, **M**edium. Residual risk is assessed qualitat
 | HAZ-08 | Stale guidance | KB not updated | Outdated recommendation | Versioned KB; review cadence; snapshot shown on each output | Medium |
 | HAZ-09 | Wrong patient / mixed records | UI or data error | Wrong-patient documentation | Patient banner on all screens; case-scoped runs; RLS; identifier cross-checks | Low–Medium |
 | HAZ-10 | System unavailable at point of care | Infra failure | Delay | Graceful degradation; deterministic functions independent of LLM; downtime procedure | Low |
-| HAZ-11 | Population out of scope handled as in scope | No age/pathway check | Inappropriate output | Pathway selection gate; refuse out-of-scope populations | Low |
+| HAZ-11 | Population out of scope handled as in scope | No age/pathway check | Inappropriate output | Pathway registry gate; age-band guard refuses paediatric and SAM cases while those pathways are inactive; activation policy §2.4 | Low |
 | HAZ-12 | Confidentiality breach | Misconfiguration; egress; logging | Privacy harm | SECURITY.md controls | Low–Medium |
 | HAZ-13 | Rule or model change degrades safety | Unreviewed update | Systematic errors | Change control; regression evaluation; pinned versions; rollback | Low |
+| HAZ-14 | Hosted model changes or is retired without notice | Provider update or deprecation | Behaviour drift; safety regression | Pinned versions; scheduled and change-triggered regression and safety suites; fallback backend; drift alerts | Medium |
+| HAZ-15 | Clinical logic treated as validated without independent review | Reviewer role vacant; rules authored and approved by the same person | Unsafe logic reaches care | Review-status ladder; "not independently reviewed" banner; clinical mode refuses to start while the reviewer is vacant or rules are unreviewed (D-019) | Low–Medium |
+| HAZ-16 | Real data sent to a hosted LLM API | Wrong data class; real notes pasted into a "synthetic" case | Confidentiality breach | Data-class gate; per-request synthetic check; build exclusion; identifier-pattern scan; synthetic-provenance rules (SECURITY.md §7.2) | Low–Medium |
 
 ## 9. Reference governance
 
@@ -170,12 +190,26 @@ Severity: **C**ritical, **H**igh, **M**edium. Residual risk is assessed qualitat
 
 ## 10. Clinical governance
 
-| Role | Responsibility |
-|---|---|
-| Clinical safety lead | Owns this document, hazard log, rule sign-off, release safety approval |
-| Clinical content owner(s) | Author and review rules, KB content, ADIME templates |
-| Project owner | Accountable for scope and priorities |
-| Privacy/security lead | Owns SECURITY.md, DPIA, incident handling |
+Roles are defined by function and are **configurable assignments**, not named individuals (D-019, FR-GOV-01).
+
+| Role | Responsibility | Current status |
+|---|---|---|
+| Product and clinical requirements lead | Owns scope, priorities and clinical requirements; authors clinical content and approves it to `author_approved`; accountable for the project | Assigned: project owner |
+| Independent clinical safety reviewer | Senior clinical dietitian/nutrition professional, independent of the content being reviewed; reviews clinical logic (rules, red flags, templates, KB selection), the hazard log and releases; signs off before any clinical deployment | **Vacant**, to be appointed |
+| Clinical content authors | Write rules, KB entries, templates and synthetic cases | Project owner (others later) |
+| Privacy/security lead | Owns SECURITY.md, the DPIA and incident handling | To be assigned |
+
+**Terminology.** Elsewhere in this repository "clinical safety lead" means the independent clinical safety reviewer once appointed; until then the product and clinical requirements lead receives safety incidents as an **interim** recipient, clearly labelled as such. "Clinical lead" in threshold-setting means the product and clinical requirements lead, with thresholds ratified by the independent reviewer before Phase 7.
+
+**Review status.** Every rule, red-flag rule, ADIME template and KB source is `draft`, `author_approved` or `independently_reviewed`. The author of an item cannot give its independent review (checked by a database trigger).
+
+**While the independent reviewer role is vacant**
+
+- Allowed: development and evaluation with synthetic data; clinical content up to `author_approved`; internal demonstrations labelled "clinical logic not independently reviewed".
+- Not allowed: real patient data; shadow or clinical use; any statement that the system or its logic is clinically validated or safe for care.
+- Enforced by: governance-role status in configuration, start-up refusal in clinical mode (FR-GOV-03) and an output banner (FR-GOV-04).
+
+Appointing the reviewer early is recommended: reviewing rules as they are written in Phase 1 avoids rework before Phase 7.
 
 Processes required before Phase 7: change control for rules/prompts/models/KB; incident reporting and review; post-release monitoring; periodic re-validation; decommission plan.
 

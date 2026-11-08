@@ -1,5 +1,5 @@
 -- ============================================================================
--- Clinical Nutrition AI Agent — PostgreSQL schema DESIGN REFERENCE (Phase 0)
+-- Clinical Nutrition AI Agent — PostgreSQL schema DESIGN REFERENCE (Phase 0, v0.2)
 --
 -- NOT A MIGRATION. Do not execute against any environment. It illustrates the
 -- structure, constraints and security model described in ARCHITECTURE.md §8.
@@ -20,6 +20,7 @@ CREATE SCHEMA IF NOT EXISTS ai;
 CREATE SCHEMA IF NOT EXISTS review;
 CREATE SCHEMA IF NOT EXISTS audit;
 CREATE SCHEMA IF NOT EXISTS eval;
+CREATE SCHEMA IF NOT EXISTS ops;
 
 -- ---------------------------------------------------------------------------
 -- Enumerated types
@@ -37,6 +38,8 @@ CREATE TYPE clinical.finding_kind AS ENUM
   ('gap', 'conflict', 'stale_value', 'red_flag', 'implausible_value');
 
 CREATE TYPE clinical.criticality AS ENUM ('blocking', 'important', 'optional');
+
+CREATE TYPE clinical.review_status AS ENUM ('draft', 'author_approved', 'independently_reviewed');
 
 CREATE TYPE ai.draft_kind AS ENUM
   ('completeness_report', 'adime_draft', 'intervention_options');
@@ -105,12 +108,57 @@ CREATE TABLE clinical.patient (
   created_at    timestamptz NOT NULL DEFAULT now()
 );
 
+-- ---------------------------------------------------------------------------
+-- pathways and reference standards (population-ready model; D-018)
+-- ---------------------------------------------------------------------------
+CREATE TABLE clinical.pathway (
+  pathway_code   text PRIMARY KEY,               -- e.g. 'adult_general'
+  label          text NOT NULL,
+  status         text NOT NULL DEFAULT 'planned' CHECK (status IN ('planned', 'active', 'retired')),
+  min_age_months integer NOT NULL CHECK (min_age_months >= 0),
+  max_age_months integer,                        -- NULL = no upper bound
+  activated_by_decision text,                    -- decision-log reference required for 'active'
+  CHECK (max_age_months IS NULL OR max_age_months >= min_age_months),
+  CHECK (status <> 'active' OR activated_by_decision IS NOT NULL)
+);
+-- Illustrative seed values only. Final age bands are set by the product and clinical requirements lead and
+-- confirmed against national guidance before activation (CLINICAL_SAFETY.md section 2.4). 'active' means
+-- selectable in development; clinical use additionally requires the clinical-mode checks (FR-GOV-03).
+-- INSERT INTO clinical.pathway VALUES
+--   ('adult_general',      'Adult general nutrition assessment', 'active',  216, NULL, 'D-018'),
+--   ('paediatric_general', 'Paediatric nutrition assessment',    'planned',   0,  215, NULL),
+--   ('paediatric_sam',     'Severe acute malnutrition',          'planned',   6,   59, NULL);
+
+CREATE TABLE clinical.reference_standard (
+  standard_id    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name           text NOT NULL,                  -- adopted growth standard or classification scheme
+  publisher      text NOT NULL,
+  version_label  text NOT NULL,
+  population     text NOT NULL,                  -- pathway or age band it applies to
+  source_url     text,
+  licence        text,
+  content_hash   bytea,
+  status         text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'retired')),
+  UNIQUE (name, version_label)
+);
+
+CREATE TABLE clinical.reference_lms (
+  standard_id uuid NOT NULL REFERENCES clinical.reference_standard(standard_id),
+  sex         text NOT NULL CHECK (sex IN ('female', 'male')),
+  measure     text NOT NULL,                     -- e.g. weight-for-age, length/height-for-age, weight-for-length/height
+  index_value numeric NOT NULL,                  -- age in months, or length/height for weight-for-length/height tables
+  l           numeric NOT NULL,
+  m           numeric NOT NULL,
+  s           numeric NOT NULL,
+  PRIMARY KEY (standard_id, sex, measure, index_value)
+);
+
 CREATE TABLE clinical.encounter (
   encounter_id      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   patient_id        uuid NOT NULL REFERENCES clinical.patient(patient_id),
   org_id            uuid NOT NULL,
   setting           text NOT NULL CHECK (setting IN ('inpatient', 'outpatient', 'community')),
-  pathway           text NOT NULL,               -- e.g. 'adult_general' (in-scope pathways only)
+  pathway           text NOT NULL REFERENCES clinical.pathway(pathway_code),  -- trigger: pathway must be 'active' and age inside its band (FR-POP-02)
   age_months_at_encounter integer NOT NULL CHECK (age_months_at_encounter >= 0),
   started_at        timestamptz NOT NULL DEFAULT now(),
   created_by        uuid NOT NULL REFERENCES iam.app_user(user_id)
@@ -133,6 +181,10 @@ CREATE TABLE clinical.data_element_def (
   plausible_min    numeric,
   plausible_max    numeric,
   staleness_days   integer,                      -- rule-defined validity window
+  enabled          boolean NOT NULL DEFAULT true,  -- population-specific elements start false until their pathway is active
+  pathways         text[] NOT NULL DEFAULT '{}',   -- pathway codes this element applies to (empty = all)
+  min_age_months   integer,
+  max_age_months   integer,
   version          integer NOT NULL DEFAULT 1,
   CHECK (plausible_min IS NULL OR plausible_max IS NULL OR plausible_min <= plausible_max)
 );
@@ -177,7 +229,7 @@ CREATE TABLE clinical.calculation (
   encounter_id    uuid NOT NULL REFERENCES clinical.encounter(encounter_id),
   formula_id      text NOT NULL,                 -- e.g. 'bmi', 'pct_weight_change'
   formula_version text NOT NULL,
-  reference_standard text,
+  reference_standard_id uuid REFERENCES clinical.reference_standard(standard_id),
   input_observation_ids uuid[] NOT NULL,
   result_numeric  numeric,
   result_text     text,
@@ -199,6 +251,35 @@ CREATE TABLE clinical.finding (
   resolved_at    timestamptz,
   created_at     timestamptz NOT NULL DEFAULT now()
 );
+
+-- ---------------------------------------------------------------------------
+-- clinical rules and review status (D-019)
+-- ---------------------------------------------------------------------------
+CREATE TABLE clinical.rule (
+  rule_id        text NOT NULL,
+  version        text NOT NULL,
+  kind           text NOT NULL CHECK (kind IN ('completeness', 'conflict', 'staleness', 'red_flag', 'template')),
+  pathway_code   text NOT NULL REFERENCES clinical.pathway(pathway_code),
+  definition     jsonb NOT NULL,
+  author_id      uuid NOT NULL REFERENCES iam.app_user(user_id),
+  review_status  clinical.review_status NOT NULL DEFAULT 'draft',
+  created_at     timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (rule_id, version)
+);
+
+CREATE TABLE clinical.rule_review (
+  review_id    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  rule_id      text NOT NULL,
+  version      text NOT NULL,
+  level        clinical.review_status NOT NULL CHECK (level IN ('author_approved', 'independently_reviewed')),
+  reviewer_id  uuid NOT NULL REFERENCES iam.app_user(user_id),
+  outcome      text NOT NULL CHECK (outcome IN ('approved', 'changes_requested')),
+  comment      text,
+  reviewed_at  timestamptz NOT NULL DEFAULT now(),
+  FOREIGN KEY (rule_id, version) REFERENCES clinical.rule(rule_id, version)
+);
+-- Trigger (Phase 1): level 'independently_reviewed' requires reviewer_id <> rule.author_id and that the reviewer
+-- holds the independent_clinical_safety_reviewer assignment in ops.governance_role.
 
 -- ---------------------------------------------------------------------------
 -- kb (curated knowledge base; read-only at runtime)
@@ -249,7 +330,10 @@ CREATE TABLE ai.run (
   requested_by      uuid NOT NULL REFERENCES iam.app_user(user_id),
   workflow_version  text NOT NULL,
   rules_version     text NOT NULL,
+  backend_mode      text CHECK (backend_mode IN ('mock', 'hosted_synthetic', 'local', 'approved_hosted')),
+  provider          text,
   model_id          text,
+  model_version     text,                        -- hosted version or snapshot identifier
   model_digest      text,                        -- SHA-256 of weights/artifact
   prompt_template_version text,
   kb_snapshot_id    uuid REFERENCES kb.snapshot(snapshot_id),
@@ -362,7 +446,10 @@ CREATE TRIGGER audit_event_no_update_delete
 CREATE TABLE eval.run (
   eval_run_id  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   model_id     text NOT NULL,
-  model_digest text NOT NULL,
+  backend_mode text NOT NULL CHECK (backend_mode IN ('mock', 'hosted_synthetic', 'local', 'approved_hosted')),
+  provider     text,
+  model_version text,
+  model_digest text,                             -- local models; hosted backends record provider and model_version
   quantisation text,
   dataset_version text NOT NULL,
   prompt_template_version text NOT NULL,
@@ -378,6 +465,32 @@ CREATE TABLE eval.case_result (
   notes        text,
   PRIMARY KEY (eval_run_id, case_id, metric)
 );
+
+-- ---------------------------------------------------------------------------
+-- ops (instance configuration and governance; D-017, D-019)
+-- ---------------------------------------------------------------------------
+CREATE TABLE ops.instance_config (
+  singleton   boolean PRIMARY KEY DEFAULT true CHECK (singleton),   -- exactly one row
+  data_class  text NOT NULL CHECK (data_class IN ('synthetic', 'real')),
+  mode        text NOT NULL CHECK (mode IN ('development', 'shadow', 'clinical')),
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  -- Real data is possible only in shadow or clinical mode. Hosted LLM adapters load only when data_class = 'synthetic'.
+  CHECK (data_class = 'synthetic' OR mode IN ('shadow', 'clinical'))
+);
+
+CREATE TABLE ops.governance_role (
+  role_key         text PRIMARY KEY CHECK (role_key IN (
+                     'product_clinical_requirements_lead',
+                     'independent_clinical_safety_reviewer',
+                     'privacy_security_lead')),
+  status           text NOT NULL DEFAULT 'vacant' CHECK (status IN ('assigned', 'vacant')),
+  assigned_user_id uuid REFERENCES iam.app_user(user_id),
+  assigned_at      timestamptz,
+  decision_ref     text,                          -- decision-log entry recording the appointment
+  CHECK ((status = 'assigned') = (assigned_user_id IS NOT NULL))
+);
+-- Start-up check (FR-GOV-03): mode 'clinical' refuses to start unless independent_clinical_safety_reviewer is
+-- 'assigned' and every active rule is 'independently_reviewed'.
 
 -- ---------------------------------------------------------------------------
 -- Privileges and row-level security (illustrative)
@@ -433,6 +546,9 @@ CREATE POLICY draft_by_encounter ON ai.draft
     EXISTS (SELECT 1 FROM clinical.encounter e WHERE e.encounter_id = ai.draft.encounter_id)
   );
 
--- Phase 1+ additions (not shown): constraint trigger for evidence-or-flag on ai.draft_item;
+-- Phase 1+ additions (not shown): pathway and age-band check trigger on clinical.encounter; consistency trigger between
+-- clinical.patient.is_synthetic and ops.instance_config.data_class; independent-reviewer-not-author trigger on
+-- clinical.rule_review; hosted-backend guard on ai.run (backend_mode 'hosted_synthetic' only when
+-- ops.instance_config.data_class = 'synthetic'); constraint trigger for evidence-or-flag on ai.draft_item;
 -- trigger blocking edits to approved drafts; trigger verifying review.decision hash equals ai.draft.content_hash;
 -- audit hash-chain computation function and verifier; remaining RLS policies and role grants.

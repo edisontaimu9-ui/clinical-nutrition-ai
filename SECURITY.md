@@ -1,6 +1,6 @@
 # Security, Privacy and Data Protection
 
-Version 0.1 · Status: **Draft for approval** · Phase 0
+Version 0.2 · Status: **Draft for approval** · Phase 0 (updated for decisions D-017, D-018, D-019)
 
 This document sets the minimum security and privacy requirements. It is not legal advice. Applicable law (for example national data-protection legislation, health-sector regulation and professional-practice rules) **must be confirmed with qualified counsel** before any processing of real patient data (NFR-GOV-02).
 
@@ -11,7 +11,7 @@ This document sets the minimum security and privacy requirements. It is not lega
 3. **Defence in depth.** Application checks *and* database enforcement *and* network controls.
 4. **Assume the model is untrusted.** The LLM can be manipulated or wrong; it gets no write access, no network and no authority.
 5. **Everything auditable.** Access and change events are recorded in a tamper-evident log.
-6. **Synthetic data until approved.** Real data is prohibited in development, test, CI and evaluation until the Phase 7 approvals.
+6. **Synthetic data until approved.** Real data is prohibited in development, test, CI and evaluation until the Phase 7 approvals. Hosted LLM APIs may be used **only** with synthetic data (§7).
 
 ## 2. Data classification
 
@@ -32,7 +32,7 @@ This document sets the minimum security and privacy requirements. It is not lega
 | `clinician` | Read/write for patients in their care relationship | Cannot administer users |
 | `trainee` | As clinician but approvals require co-sign | Supervisor link recorded |
 | `supervisor` | As clinician plus co-sign | |
-| `clinical_safety_lead` | Aggregated/sampled review access for safety incidents | Access logged and justified |
+| `clinical_safety_lead` | Aggregated/sampled review access for safety incidents | Access logged and justified. Held by the independent clinical safety reviewer once appointed; may be vacant until then (D-019) |
 | `admin` | **None** | Manages users, config, kill switch |
 | `auditor` | None (audit metadata only) | Read-only audit |
 | `engineer` | **None in production**; synthetic only elsewhere | Break-glass is time-boxed, approved, logged |
@@ -70,7 +70,7 @@ Never roll custom cryptography. Use vetted libraries.
 ## 6. Network and infrastructure
 
 - Zoned network (edge / application / AI / data / management) per ARCHITECTURE.md §11.
-- Default-deny firewall rules; **AI zone has no outbound internet**.
+- Default-deny firewall rules; **AI zone has no outbound internet in real-data instances** (synthetic-only instances allow only the hosted-LLM endpoint allow-list, §7.3).
 - WAF and rate limiting at the edge; admin interfaces not publicly exposed.
 - Hardened, minimal container images; non-root; read-only filesystems where possible; image signing and vulnerability scanning.
 - Infrastructure as code with peer review; drift detection.
@@ -78,20 +78,50 @@ Never roll custom cryptography. Use vetted libraries.
 
 ## 7. External AI services and data egress
 
-**Rule:** identifiable patient information must **not** be sent to external AI services (hosted LLM APIs, third-party embedding, speech or OCR services, analytics with AI features) unless an approved legal and privacy framework exists.
+**Rule:** identifiable patient information must **not** be sent to external AI services (hosted LLM APIs, third-party embedding, speech or OCR services, analytics with AI features) unless an approved legal and privacy framework exists. **Synthetic** data may be sent to hosted LLM APIs only under the conditions in §7.3. The owner currently has no local inference hardware, so development starts in that mode (D-017).
 
-An *approved framework* means, at minimum, all of: a completed DPIA; counsel's confirmation of lawful basis and cross-border transfer position; a signed data-processing agreement with the provider including no-training/no-retention terms; documented security assessment of the provider; clinical governance approval; recorded approval reference (decision-log entry); and patient/organisation notice where required.
+### 7.1 Deployment modes
 
-Technical enforcement:
+| Mode | Backend | Data allowed | Notes |
+|---|---|---|---|
+| T – test | Deterministic mock | Synthetic | Used in CI; no network |
+| S – synthetic-hosted | Hosted LLM API via adapter | **Synthetic only** | Development mode; controls in §7.3 |
+| L – local | Self-hosted open-weight model | Synthetic or real | Default for any real-data instance |
+| A – approved-hosted | Hosted provider under an approved framework | As the framework allows | Unavailable until §7.4 is satisfied |
 
-1. LLM gateway is the only component allowed to invoke models and is configured for local endpoints only.
-2. Network egress deny from application and AI zones; DNS egress monitored.
-3. A **PHI egress filter** in the gateway blocks requests whose destination is not on a local allow-list.
-4. Configuration cannot enable an external provider without a non-empty approval-reference value that is audited, and the build fails in CI if any external AI SDK is imported outside a designated, disabled adapter.
-5. Even with an approved framework, send the minimum necessary, pseudonymised where possible.
-6. Automated tests attempt egress and assert failure (`tests/safety/egress_block`).
+### 7.2 What "synthetic" means
 
-Operational telemetry, crash reporters, package mirrors and model downloads are also egress paths: they must be allow-listed and must not carry patient data. Models and packages are fetched during build into an internal registry, not at runtime.
+Synthetic data is **invented or algorithmically generated**. Real records that have been scrubbed, masked, paraphrased or "tweaked" are **not** synthetic.
+
+- Cases must not be modelled on identifiable real patients. Avoid rare combinations of age, location, diagnosis, dates, occupation, family details and names.
+- Clinician-authored cases are checked for re-identification risk before they are merged (checklist to be added under `docs/clinical/` in Phase 1).
+- Free-text fields in synthetic cases are invented too. Never paste real notes, even edited.
+- Every synthetic record carries `is_synthetic = true`; real and synthetic data never share a database instance.
+- If real data is found in a synthetic environment, including in a prompt sent to a hosted API, treat it as a privacy incident (§13): stop use, rotate keys, request deletion from the provider where its terms allow, and notify as policy requires.
+
+### 7.3 Controls for hosted LLM backends (mode S)
+
+1. **Instance data class.** `ops.instance_config.data_class` must be `synthetic`; hosted adapters refuse to load otherwise.
+2. **Per-request gate.** Each gateway request carries a case ID; the gateway verifies that the case and patient are `is_synthetic = true` before any outbound call, and logs the decision.
+3. **Build exclusion.** Real-data and clinical build profiles do not contain hosted adapters at all; CI checks this (`hosted-adapter-exclusion-check`).
+4. **Endpoint allow-list.** Only the configured provider endpoints are reachable, and only from the LLM gateway.
+5. **Identifier-pattern scan** on outbound prompts (phone numbers, ID formats, email addresses, deny-listed names) blocks the call and alerts. This is defence in depth, not a substitute for items 1 to 3.
+6. **Provider terms recorded** in the decision log before first use: data retention, use for training, processing location, sub-processors and deletion. Prefer zero-retention and no-training terms even though the data is synthetic.
+7. **Keys.** Scoped, spend-limited and per-environment. Stored only in a secret manager, or in a permission-restricted file or environment variable outside the repository; never in committed files, logs, chat transcripts, or typed inline into shell commands (which end up in shell history). On Termux: keep the key in a `chmod 600` file outside the repository and load it at runtime. Rotate on any suspected exposure.
+8. **Logging.** Prompts and outputs are stored as hashes by default; full text is kept only in synthetic evaluation stores.
+9. **Budget.** Per-environment spend and rate caps with anomaly alerts.
+10. **Tests.** `tests/safety/hosted_gate` asserts that hosted calls are refused for non-synthetic cases and in any instance recorded as real-data, and that real-data builds contain no hosted adapter; `tests/safety/egress_block` asserts that everything else is blocked.
+
+### 7.4 Approved framework (mode A) for real data
+
+An *approved framework* means, at minimum, all of: a completed DPIA; counsel's confirmation of lawful basis and cross-border transfer position; a signed data-processing agreement with the provider including no-training/no-retention terms; documented security assessment of the provider; clinical governance approval (including the independent clinical safety reviewer); a recorded approval reference (decision-log entry); and patient/organisation notice where required. Even then, send the minimum necessary, pseudonymised where possible.
+
+### 7.5 Local mode and other egress paths
+
+1. In real-data instances the LLM gateway talks to local endpoints only; there is no outbound internet from the AI zone.
+2. Network egress is denied from the application and AI zones; DNS egress is monitored.
+3. Operational telemetry, crash reporters, package mirrors and model downloads are egress paths too: allow-list them and keep patient data out of them. Models and packages are fetched at build time into an internal registry, not at runtime.
+4. CI fails if an external AI SDK is imported outside a designated adapter package.
 
 ## 8. Application security
 
@@ -124,10 +154,10 @@ Events that **must** be logged:
 - Authentication, MFA, failures, session revocation, privilege changes, break-glass.
 - Any read of patient content (including search results counts and exports).
 - Create/update/supersede of observations; analysis runs.
-- AI runs (model ID and digest, prompt version, KB snapshot, input/output hashes), verifier decisions, regenerations.
+- AI runs (backend mode, provider, model ID and version or digest, prompt version, KB snapshot, input/output hashes), verifier decisions, regenerations.
 - Review actions: approve, edit, reject, co-sign, override, amendment.
 - Configuration, rule, prompt, model or KB version changes.
-- Kill-switch use and egress-block events.
+- Kill-switch use, egress-block events and hosted-LLM gate decisions (allowed and refused).
 
 Properties: insert-only (UPDATE/DELETE revoked and blocked by trigger), hash-chained, periodically anchored (e.g., chain head exported to a separate trusted store), verified by a scheduled job that alerts on failure, retained per policy, readable only by the `auditor` role and security tooling. Logs contain no clinical free text.
 
@@ -141,6 +171,8 @@ Properties: insert-only (UPDATE/DELETE revoked and blocked by trigger), hash-cha
 | Excessive agency | Fixed workflow; no model-initiated actions; write access only via orchestrator after verification |
 | Hallucinated references | Citations only by KB chunk ID; resolver and verifier; "no source found" behaviour |
 | Training-data/model supply-chain risk | Models from reviewed sources only; digest pinning; scan weights/containers; internal registry; no runtime downloads |
+| Provider-side retention, training use or disclosure (hosted backends) | Synthetic-only gate (§7.3); provider terms recorded; no secrets or real identifiers in prompts |
+| Silent hosted-model change or retirement | Pinned versions; scheduled and change-triggered regression and safety suites; fallback backend; alert on output-distribution drift |
 | Model denial of service | Queue limits, token limits, timeouts, per-user quotas |
 | Embedding/vector store leakage | Embeddings of KB only (public/licensed text), **not** patient notes, unless a later decision adds them under the same controls |
 | Memorisation/cross-patient leakage | No fine-tuning on patient data; no shared conversational memory across cases |
@@ -150,10 +182,10 @@ Properties: insert-only (UPDATE/DELETE revoked and blocked by trigger), hash-cha
 - Branch protection, mandatory pull-request review, signed commits where practical.
 - Threat modelling at each phase kickoff; security acceptance criteria in every phase exit gate.
 - Pre-commit hooks: secret scanning, identifier-pattern scanning (names, phone, ID formats) for the synthetic-only rule.
-- CI gates: unit/integration/safety tests, SAST, dependency and container scanning, licence check, migration check, `synthetic-only-check`.
+- CI gates: unit/integration/safety tests, SAST, dependency and container scanning, licence check, migration check, `synthetic-only-check`, `hosted-adapter-exclusion-check`.
 - Environments: `dev`, `test`, `staging`, `prod` with separate credentials and data; production data never copied down.
 - The repository `.gitignore` excludes data files, keys, model weights and environment files; any such file committed is treated as an incident.
-- Developer workstations (including mobile/terminal-based workflows) must use full-device encryption, screen lock and no local copies of real patient data.
+- Developer workstations (including mobile/terminal-based workflows) must use full-device encryption, screen lock and no local copies of real patient data. Provider API keys follow §7.3 item 7.
 
 ## 13. Incident response
 
@@ -170,10 +202,10 @@ Create and maintain a register mapping each applicable legal and regulatory requ
 | Phase | Security deliverables |
 |---|---|
 | 0 | This document; threat model v0; data classification |
-| 1 | Identity/clinical separation; RLS design tests; synthetic data only; secret and identifier scanning in CI |
+| 1 | Identity/clinical separation; RLS design tests; synthetic data only; secret and identifier scanning in CI; instance data class and governance tables |
 | 2 | AuthN/MFA, RBAC, RLS enforced, encryption, KMS integration, audit chain and verifier, backup/restore test |
-| 3 | LLM gateway with egress deny and tests; model registry with digests |
+| 3 | Provider-neutral LLM gateway; hosted adapter with synthetic-only gates (§7.3) and tests; mock backend; model/provider version registry; key-handling checks; local runtime deferred until the hosting decision |
 | 4 | KB integrity and licence register |
 | 5 | Prompt-injection and leakage test suites passing |
 | 6 | UI security review (CSP, session handling), pen test of API |
-| 7 | DPIA, ethics approval, penetration test, incident-response exercise, go/no-go security sign-off |
+| 7 | Real-data inference mode implemented (local or approved framework); DPIA, ethics approval, penetration test, incident-response exercise, go/no-go security sign-off |
