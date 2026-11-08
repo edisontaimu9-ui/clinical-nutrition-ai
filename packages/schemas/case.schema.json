@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/cnai/case.schema.json",
+  "title": "CNAI assessment case (synthetic development input)",
+  "type": "object",
+  "required": [
+    "case_id",
+    "patient",
+    "encounter",
+    "observations"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string"
+    },
+    "intent": {
+      "type": "string"
+    },
+    "synthetic": {
+      "type": "boolean"
+    },
+    "patient": {
+      "type": "object",
+      "required": [
+        "pseudonym"
+      ],
+      "properties": {
+        "pseudonym": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sex_at_birth": {
+          "enum": [
+            "male",
+            "female",
+            "unknown"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "encounter": {
+      "type": "object",
+      "required": [
+        "setting",
+        "pathway",
+        "age_months",
+        "assessment_date"
+      ],
+      "properties": {
+        "setting": {
+          "enum": [
+            "inpatient",
+            "outpatient",
+            "community"
+          ]
+        },
+        "pathway": {
+          "type": "string"
+        },
+        "age_months": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "assessment_date": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "additionalProperties": false
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/observation"
+      }
+    },
+    "expected": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "observation": {
+      "type": "object",
+      "required": [
+        "id",
+        "element",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "element": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "present",
+            "not_assessed",
+            "not_applicable",
+            "unknown_or_unreliable",
+            "declared_normal_by_clinician"
+          ]
+        },
+        "value": {
+          "type": [
+            "number",
+            "string",
+            "boolean"
+          ]
+        },
+        "unit": {
+          "type": "string"
+        },
+        "observed_on": {
+          "type": "string",
+          "format": "date"
+        },
+        "supersedes": {
+          "type": "string"
+        },
+        "declared_by": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "present"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "value"
+            ]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "value"
+                  ]
+                },
+                {
+                  "required": [
+                    "unit"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "declared_normal_by_clinician"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "declared_by"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

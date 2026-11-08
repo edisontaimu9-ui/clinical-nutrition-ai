@@ -1,8 +1,10 @@
 # Decision Log
 
-Version 0.2 · Phase 0 status: **awaiting owner approval**. Changes since v0.1: D-007 amended; D-009 and D-012 clarified; D-017, D-018 and D-019 added; Q-01, Q-03 and Q-06 answered; Q-11 and Q-12 added.
+Version 0.4 · Phase 1 decisions D-020 to D-022 added as Proposed · Phase 0 status: **approved by the project owner on 2026-11-08**. Changes since v0.2: all decisions D-001 to D-019 moved to Accepted; the suggested defaults for all open questions were accepted (see the questions table); Phase 1 started.
 
-Architecture and clinical-design decisions for the Clinical Nutrition AI Agent. Format: lightweight ADR. All entries are **Proposed** until the project owner approves Phase 0; then they become **Accepted**. Never delete entries; supersede them.
+Architecture and clinical-design decisions for the Clinical Nutrition AI Agent. Format: lightweight ADR. Never delete entries; supersede them.
+
+**Approval record (2026-11-08):** the project owner approved the Phase 0 v0.2 documents and accepted the suggested defaults for Q-02, Q-04, Q-05, Q-07, Q-08, Q-09, Q-10, Q-11 and Q-12 with a "Yes" in reply to a message offering exactly that. Items that still need a real-world action (naming facility types, choosing a hosted provider, appointing the reviewer) are listed under "Follow-ups" below.
 
 Status values: Proposed · Accepted · Superseded · Rejected.
 
@@ -10,25 +12,28 @@ Status values: Proposed · Accepted · Superseded · Rejected.
 
 | ID | Title | Status |
 |---|---|---|
-| D-001 | Independent project; patient data stays inside a controlled trust boundary | Proposed |
-| D-002 | Deterministic-first design; LLM limited to drafting | Proposed |
-| D-003 | Five-state data-element model | Proposed |
-| D-004 | "Candidate nutrition diagnosis", never medical diagnosis | Proposed |
-| D-005 | PostgreSQL as the single data engine (RLS, pgcrypto, pgvector) | Proposed |
-| D-006 | Python/FastAPI modular monolith first | Proposed |
-| D-007 | Real-data inference stays local; hosted APIs only under D-017 | Proposed (amended by D-017) |
-| D-008 | Terminology: project-defined labels until licensing is confirmed | Proposed |
-| D-009 | Synthetic data only until Phase 7 approvals | Proposed |
-| D-010 | Append-only, hash-chained audit log | Proposed |
-| D-011 | Fixed workflow state machine, not an autonomous agent loop | Proposed |
-| D-012 | Model selection deferred to an evidence-based bake-off | Proposed |
-| D-013 | Curated, versioned, licence-checked knowledge base; citations by ID only | Proposed |
-| D-014 | FHIR R4 as a later interoperability target | Proposed |
-| D-015 | Development workflow compatible with constrained devices; CI does heavy work | Proposed |
-| D-016 | Phase 0 produces documentation and folder structure only | Proposed |
-| D-017 | Hosted LLM APIs for synthetic-data development; model-independent gateway | Proposed |
-| D-018 | Adult pathway first; data model ready for paediatric and SAM | Proposed |
-| D-019 | Configurable governance roles; independent clinical review before clinical deployment | Proposed |
+| D-001 | Independent project; patient data stays inside a controlled trust boundary | Accepted |
+| D-002 | Deterministic-first design; LLM limited to drafting | Accepted |
+| D-003 | Five-state data-element model | Accepted |
+| D-004 | "Candidate nutrition diagnosis", never medical diagnosis | Accepted |
+| D-005 | PostgreSQL as the single data engine (RLS, pgcrypto, pgvector) | Accepted |
+| D-006 | Python/FastAPI modular monolith first | Accepted |
+| D-007 | Real-data inference stays local; hosted APIs only under D-017 | Accepted (amended by D-017) |
+| D-008 | Terminology: project-defined labels until licensing is confirmed | Accepted |
+| D-009 | Synthetic data only until Phase 7 approvals | Accepted |
+| D-010 | Append-only, hash-chained audit log | Accepted |
+| D-011 | Fixed workflow state machine, not an autonomous agent loop | Accepted |
+| D-012 | Model selection deferred to an evidence-based bake-off | Accepted |
+| D-013 | Curated, versioned, licence-checked knowledge base; citations by ID only | Accepted |
+| D-014 | FHIR R4 as a later interoperability target | Accepted |
+| D-015 | Development workflow compatible with constrained devices; CI does heavy work | Accepted |
+| D-016 | Phase 0 produces documentation and folder structure only | Accepted |
+| D-017 | Hosted LLM APIs for synthetic-data development; model-independent gateway | Accepted |
+| D-018 | Adult pathway first; data model ready for paediatric and SAM | Accepted |
+| D-019 | Configurable governance roles; independent clinical review before clinical deployment | Accepted |
+| D-020 | Instance data class enforced by the database and the engine (synthetic or real) | Proposed |
+| D-021 | Phase 1 deterministic core: catalogue as single source of truth, exact decimal arithmetic, no LLM | Proposed |
+| D-022 | Clinical sign-off is a recorded human act; software never marks content reviewed | Proposed |
 
 ---
 
@@ -138,6 +143,24 @@ Status values: Proposed · Accepted · Superseded · Rejected.
 - **Consequences:** Phases 1 to 6 can proceed; Phase 7 is blocked until the appointment. Appointing early lets rules be reviewed as they are written.
 - **Alternatives:** Project owner as sole approver (rejected: no independence).
 
+## D-020 · Instance data class enforced by the database and the engine
+- **Context:** D-009 and D-017 allow hosted APIs only for synthetic data, so "synthetic only" must be a technical fact, not a habit.
+- **Decision:** Each instance records its data class (`synthetic` or `real`) in `ops.instance_config`. Patients carry an `is_synthetic` flag that must match, and both are immutable. Real data class is impossible in development mode. The engine refuses a non-synthetic case in a synthetic instance. A repository scanner rejects identifier-like content in synthetic data and secrets anywhere.
+- **Consequences:** A mistake cannot silently put real data into a development instance. Moving to real data (Phase 7) needs a separate, deliberate instance and its own approvals.
+- **Alternatives:** Policy-only control (rejected: not testable).
+
+## D-021 · Phase 1 deterministic core: catalogue as single source of truth, exact decimal arithmetic, no LLM
+- **Context:** Phase 1 must prove that missing, conflicting and numeric facts are decided by code a clinician can read and review.
+- **Decision:** The data-element catalogue and pathway registry live in JSON and generate a database migration (with a drift check). Calculators use exact decimal arithmetic with half-up rounding and report formula id, version, inputs and reference. Clinical cut-offs and rule text are listed in a generated review sheet read from the same code tables. The core package has no network or LLM imports. Rule content starts as `draft`.
+- **Consequences:** Documents and code cannot drift apart. Reference cases, cut-offs and rules still need clinician verification before they are treated as correct.
+- **Alternatives:** Hand-maintained SQL and docs (rejected: drift); floating point (rejected: rounding surprises at category boundaries).
+
+## D-022 · Clinical sign-off is a recorded human act; software never marks content reviewed
+- **Context:** FR-GOV-02 requires author approval and independent review, and the independent reviewer is not yet appointed.
+- **Decision:** Sign-off is recorded by the signer in `docs/clinical/rule-signoff.md`, and a rule set's `review_status` changes only after that. Engineering may prepare review material (the generated review sheet) but may not change a review status or mark reference cases verified. Until independent review is recorded, every report carries the "not independently reviewed" banner.
+- **Consequences:** Phase 1 can finish its engineering while the clinical exit items stay open and visible.
+- **Alternatives:** Engineering marks items approved on the owner's verbal consent (rejected: no record, no independence).
+
 ---
 
 ## Open questions for the project owner
@@ -147,14 +170,24 @@ Status as of v0.2. Answered questions are linked to the decision that records th
 | # | Question | Status |
 |---|---|---|
 | Q-01 | Initial population: adults only, or also paediatrics / SAM from the start? | **Answered** — adult first; model ready for paediatric and SAM (D-018) |
-| Q-02 | Care setting and country: which facilities and national guidelines should the KB prioritise? | **Open.** Suggested default: Malawi; hospital inpatient and outpatient nutrition services; KB priority is national guidance first, then international sources as licences allow (confirm facility types) |
+| Q-02 | Care setting and country: which facilities and national guidelines should the KB prioritise? | **Closed: default accepted 2026-11-08.** Suggested default: Malawi; hospital inpatient and outpatient nutrition services; KB priority is national guidance first, then international sources as licences allow (confirm facility types) |
 | Q-03 | Who is the clinical safety lead? | **Answered** — owner leads product and clinical requirements; independent senior clinical dietitian/nutrition professional to be appointed; role configurable (D-019) |
-| Q-04 | Terminology: licensed standardised nutrition-care terminology, or project-defined labels? | **Open.** Suggested default: project-defined labels (D-008) until licensing is confirmed |
-| Q-05 | Hosting for real data (future): on-premises, private cloud, or none until Phase 7? | **Open.** Suggested default: no real data before Phase 7; decide then between a local server (mode L) and an approved hosted framework (mode A) |
+| Q-04 | Terminology: licensed standardised nutrition-care terminology, or project-defined labels? | **Closed: default accepted 2026-11-08.** Suggested default: project-defined labels (D-008) until licensing is confirmed |
+| Q-05 | Hosting for real data (future): on-premises, private cloud, or none until Phase 7? | **Closed: default accepted 2026-11-08.** Suggested default: no real data before Phase 7; decide then between a local server (mode L) and an approved hosted framework (mode A) |
 | Q-06 | Inference hardware for the bake-off? | **Answered** — no GPU; start with hosted APIs on synthetic data; model-independent design (D-017) |
-| Q-07 | Languages: English only for now? Chichewa input later? | **Open.** Suggested default: English only; revisit after Phase 7 |
-| Q-08 | Repository licence: open source (which) or proprietary? | **Open.** Suggested default: keep the repository private and unlicensed (all rights reserved) until decided; decide before making it public or accepting contributors |
-| Q-09 | Will trainees use the system (co-sign workflow)? | **Open.** Suggested default: the schema supports supervised co-sign from the start; enable it in Phase 6 |
-| Q-10 | Ethics/privacy contacts: which research ethics committee and data-protection adviser? | **Open.** Suggested default: identify both before Phase 6 so Phase 7 can be scheduled |
-| Q-11 | Hosted provider(s) and budget for synthetic-data development: which API access do you have, and what monthly spend cap? | **Open (new).** Suggested default: one primary hosted provider plus the mock backend; set a hard spend cap; confirm no-training and minimal-retention terms before first use and record them here |
-| Q-12 | When do you expect to identify the independent clinical safety reviewer? | **Open (new).** Suggested default: name a candidate before Phase 1 exits so the first rule set can be independently reviewed early |
+| Q-07 | Languages: English only for now? Chichewa input later? | **Closed: default accepted 2026-11-08.** Suggested default: English only; revisit after Phase 7 |
+| Q-08 | Repository licence: open source (which) or proprietary? | **Closed: default accepted 2026-11-08.** Suggested default: keep the repository private and unlicensed (all rights reserved) until decided; decide before making it public or accepting contributors |
+| Q-09 | Will trainees use the system (co-sign workflow)? | **Closed: default accepted 2026-11-08.** Suggested default: the schema supports supervised co-sign from the start; enable it in Phase 6 |
+| Q-10 | Ethics/privacy contacts: which research ethics committee and data-protection adviser? | **Closed: default accepted 2026-11-08.** Suggested default: identify both before Phase 6 so Phase 7 can be scheduled |
+| Q-11 | Hosted provider(s) and budget for synthetic-data development: which API access do you have, and what monthly spend cap? | **Closed: default accepted 2026-11-08.** Suggested default: one primary hosted provider plus the mock backend; set a hard spend cap; confirm no-training and minimal-retention terms before first use and record them here |
+| Q-12 | When do you expect to identify the independent clinical safety reviewer? | **Closed: default accepted 2026-11-08.** Suggested default: name a candidate before Phase 1 exits so the first rule set can be independently reviewed early |
+
+### Follow-ups still needing real-world action
+
+| # | Follow-up | Owner | Needed by |
+|---|---|---|---|
+| F-01 | Confirm the facility types the KB and rules should target (Q-02 default: Malawi hospital inpatient and outpatient nutrition services) | Project owner | Before KB sourcing, Phase 4 |
+| F-02 | Choose the first hosted provider, set a hard spend cap, and record its retention and no-training terms here (Q-11) | Project owner | Phase 3 |
+| F-03 | Name a candidate independent clinical safety reviewer (Q-12) | Project owner | Before Phase 1 exits, so the first rule set can be independently reviewed |
+| F-04 | Identify the research ethics committee and data-protection adviser (Q-10) | Project owner | Before Phase 6 |
+| F-05 | Decide between a local server (mode L) and an approved hosted framework (mode A) for real data (Q-05) | Project owner | Before Phase 7 |

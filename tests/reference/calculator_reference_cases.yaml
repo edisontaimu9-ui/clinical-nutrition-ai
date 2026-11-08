@@ -1,0 +1,44 @@
+# Calculator reference cases.
+#
+# Expected values were computed independently of the engine, with exact fractions (not Decimal arithmetic), and
+# rounded half-up to 2 decimals. They are arithmetic checks of the stated formulas, NOT clinical judgements.
+#
+# VERIFICATION STATUS: pending_clinician_verification
+#   Exit criterion for Phase 1 requires the product and clinical requirements lead to verify these cases (formula,
+#   inputs, expected value, and the WHO category boundaries) and then change the status below to `verified` and
+#   add `verified_by` and `verified_on`. The test suite reports the status but does not require it to be changed.
+status: pending_clinician_verification
+verified_by: null
+verified_on: null
+
+bmi:
+  - {id: BMI-01, weight: 70,  weight_unit: kg, height: 175,   height_unit: cm, expected: "22.86", category_contains: "within the WHO normal range"}
+  - {id: BMI-02, weight: 70,  weight_unit: kg, height: 1.75,  height_unit: m,  expected: "22.86", category_contains: "within the WHO normal range"}
+  - {id: BMI-03, weight: 50,  weight_unit: kg, height: 170,   height_unit: cm, expected: "17.30", category_contains: "mild thinness"}
+  - {id: BMI-04, weight: 95,  weight_unit: kg, height: 170,   height_unit: cm, expected: "32.87", category_contains: "obese class I "}
+  - {id: BMI-05, weight: 45,  weight_unit: kg, height: 180,   height_unit: cm, expected: "13.89", category_contains: "severe thinness"}
+  - {id: BMI-06, weight: 154, weight_unit: lb, height: 69,    height_unit: in, expected: "22.74", category_contains: "within the WHO normal range"}
+  # boundary values (each lands exactly on a cut-off; lower bound belongs to the higher category)
+  - {id: BMI-07, weight: 64,  weight_unit: kg, height: 200,   height_unit: cm, expected: "16.00", category_contains: "moderate thinness"}
+  - {id: BMI-08, weight: 68,  weight_unit: kg, height: 200,   height_unit: cm, expected: "17.00", category_contains: "mild thinness"}
+  - {id: BMI-09, weight: 74,  weight_unit: kg, height: 200,   height_unit: cm, expected: "18.50", category_contains: "within the WHO normal range"}
+  - {id: BMI-10, weight: 100, weight_unit: kg, height: 200,   height_unit: cm, expected: "25.00", category_contains: "overweight"}
+  - {id: BMI-11, weight: 120, weight_unit: kg, height: 200,   height_unit: cm, expected: "30.00", category_contains: "obese class I "}
+  - {id: BMI-12, weight: 140, weight_unit: kg, height: 200,   height_unit: cm, expected: "35.00", category_contains: "obese class II "}
+  - {id: BMI-13, weight: 160, weight_unit: kg, height: 200,   height_unit: cm, expected: "40.00", category_contains: "obese class III"}
+
+pct_weight_change_vs_previous:
+  - {id: PCT-01, previous: 70,   current: 66.5, unit: kg, days: 30, expected: "-5.00"}
+  - {id: PCT-02, previous: 80,   current: 72,   unit: kg, days: 30, expected: "-10.00"}
+  - {id: PCT-03, previous: 60,   current: 63,   unit: kg, days: 14, expected: "5.00"}
+  - {id: PCT-04, previous: 64.3, current: 61.8, unit: kg, days: 7,  expected: "-3.89"}
+  - {id: PCT-05, previous: 160,  current: 150,  unit: lb, days: 20, expected: "-6.25"}
+
+unit_conversions:
+  - {id: UNIT-01, element: bio.glucose_mmol_l,      value: 90,  unit: mg/dL,  canonical_approx: 4.99567, tolerance: 0.00001}
+  - {id: UNIT-02, element: bio.creatinine_umol_l,   value: 1.0, unit: mg/dL,  canonical_approx: 88.4,    tolerance: 0.000001}
+  - {id: UNIT-03, element: bio.haemoglobin_g_dl,    value: 120, unit: g/L,    canonical_approx: 12.0,    tolerance: 0.000001}
+  - {id: UNIT-04, element: bio.phosphate_mmol_l,    value: 3.1, unit: mg/dL,  canonical_approx: 1.00099, tolerance: 0.000001}
+  - {id: UNIT-05, element: anthro.weight_kg,        value: 154, unit: lb,     canonical_approx: 69.85322498, tolerance: 0.00000001}
+  - {id: UNIT-06, element: anthro.height_cm,        value: 69,  unit: in,     canonical_approx: 175.26, tolerance: 0.000001}
+  - {id: UNIT-07, element: bio.potassium_mmol_l,    value: 4.0, unit: mEq/L,  canonical_approx: 4.0,     tolerance: 0.000001}

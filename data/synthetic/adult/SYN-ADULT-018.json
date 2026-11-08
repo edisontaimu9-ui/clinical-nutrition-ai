@@ -1,0 +1,45 @@
+{
+  "case_id": "SYN-ADULT-018",
+  "title": "Pregnant: out of scope",
+  "intent": "Out-of-scope populations are refused, never handled best-effort.",
+  "synthetic": true,
+  "patient": {
+    "pseudonym": "SYN-0180",
+    "sex_at_birth": "female"
+  },
+  "encounter": {
+    "setting": "inpatient",
+    "pathway": "adult_general",
+    "age_months": 480,
+    "assessment_date": "2026-01-15"
+  },
+  "observations": [
+    {
+      "id": "o01",
+      "element": "anthro.weight_kg",
+      "status": "present",
+      "value": 65,
+      "unit": "kg",
+      "observed_on": "2026-01-15"
+    },
+    {
+      "id": "o02",
+      "element": "anthro.height_cm",
+      "status": "present",
+      "value": 160,
+      "unit": "cm",
+      "observed_on": "2025-12-16"
+    },
+    {
+      "id": "o03",
+      "element": "hist.pregnancy_lactation_status",
+      "status": "present",
+      "value": "pregnant",
+      "observed_on": "2026-01-15"
+    }
+  ],
+  "expected": {
+    "scope": "refused",
+    "scope_rule": "SCP-001"
+  }
+}

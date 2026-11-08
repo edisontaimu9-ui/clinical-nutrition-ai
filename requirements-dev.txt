@@ -1,0 +1,7 @@
+# Development and CI dependencies (synthetic data only). Pin ranges, not exact versions, until the lock file is added.
+pytest>=8
+hypothesis>=6
+psycopg[binary]>=3.1
+PyYAML>=6
+jsonschema>=4.18
+pglast>=6

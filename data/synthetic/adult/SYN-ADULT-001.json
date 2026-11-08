@@ -1,0 +1,246 @@
+{
+  "case_id": "SYN-ADULT-001",
+  "title": "Complete assessment, stable weight",
+  "intent": "Baseline: everything present, nothing to flag except possible low-severity prompts.",
+  "synthetic": true,
+  "patient": {
+    "pseudonym": "SYN-0010",
+    "sex_at_birth": "male"
+  },
+  "encounter": {
+    "setting": "inpatient",
+    "pathway": "adult_general",
+    "age_months": 480,
+    "assessment_date": "2026-01-15"
+  },
+  "observations": [
+    {
+      "id": "o01",
+      "element": "anthro.weight_kg",
+      "status": "present",
+      "value": 70,
+      "unit": "kg",
+      "observed_on": "2026-01-15"
+    },
+    {
+      "id": "o02",
+      "element": "anthro.height_cm",
+      "status": "present",
+      "value": 175,
+      "unit": "cm",
+      "observed_on": "2025-11-16"
+    },
+    {
+      "id": "o03",
+      "element": "anthro.usual_weight_kg",
+      "status": "present",
+      "value": 71,
+      "unit": "kg"
+    },
+    {
+      "id": "o04",
+      "element": "anthro.muac_cm",
+      "status": "present",
+      "value": 27,
+      "unit": "cm",
+      "observed_on": "2026-01-15"
+    },
+    {
+      "id": "o05",
+      "element": "bio.haemoglobin_g_dl",
+      "status": "present",
+      "value": 13.5,
+      "unit": "g/dL",
+      "observed_on": "2026-01-13"
+    },
+    {
+      "id": "o06",
+      "element": "bio.glucose_mmol_l",
+      "status": "present",
+      "value": 5.2,
+      "unit": "mmol/L",
+      "observed_on": "2026-01-15"
+    },
+    {
+      "id": "o07",
+      "element": "bio.creatinine_umol_l",
+      "status": "present",
+      "value": 80,
+      "unit": "umol/L",
+      "observed_on": "2026-01-13"
+    },
+    {
+      "id": "o08",
+      "element": "bio.potassium_mmol_l",
+      "status": "present",
+      "value": 4.1,
+      "unit": "mmol/L",
+      "observed_on": "2026-01-14"
+    },
+    {
+      "id": "o09",
+      "element": "bio.phosphate_mmol_l",
+      "status": "present",
+      "value": 1.0,
+      "unit": "mmol/L",
+      "observed_on": "2026-01-14"
+    },
+    {
+      "id": "o10",
+      "element": "bio.magnesium_mmol_l",
+      "status": "present",
+      "value": 0.85,
+      "unit": "mmol/L",
+      "observed_on": "2026-01-14"
+    },
+    {
+      "id": "o11",
+      "element": "clin.oedema_present",
+      "status": "present",
+      "value": false,
+      "observed_on": "2026-01-15"
+    },
+    {
+      "id": "o12",
+      "element": "clin.nfpe_muscle_wasting",
+      "status": "present",
+      "value": "none",
+      "observed_on": "2026-01-15"
+    },
+    {
+      "id": "o13",
+      "element": "clin.nfpe_subcutaneous_fat_loss",
+      "status": "present",
+      "value": "none",
+      "observed_on": "2026-01-15"
+    },
+    {
+      "id": "o14",
+      "element": "clin.dysphagia_symptoms",
+      "status": "present",
+      "value": false,
+      "observed_on": "2026-01-15"
+    },
+    {
+      "id": "o15",
+      "element": "clin.gi_symptoms",
+      "status": "present",
+      "value": "none reported",
+      "observed_on": "2026-01-15"
+    },
+    {
+      "id": "o16",
+      "element": "intake.npo_status",
+      "status": "present",
+      "value": false,
+      "observed_on": "2026-01-15"
+    },
+    {
+      "id": "o17",
+      "element": "intake.oral_intake_percent_usual",
+      "status": "present",
+      "value": 80,
+      "unit": "percent",
+      "observed_on": "2026-01-15"
+    },
+    {
+      "id": "o18",
+      "element": "intake.appetite",
+      "status": "present",
+      "value": "reduced",
+      "observed_on": "2026-01-15"
+    },
+    {
+      "id": "o19",
+      "element": "intake.diet_history_summary",
+      "status": "present",
+      "value": "Three meals, little snacking.",
+      "observed_on": "2026-01-14"
+    },
+    {
+      "id": "o20",
+      "element": "func.handgrip_strength_kg",
+      "status": "present",
+      "value": 30,
+      "unit": "kg",
+      "observed_on": "2026-01-12"
+    },
+    {
+      "id": "o21",
+      "element": "func.mobility_status",
+      "status": "present",
+      "value": "independent",
+      "observed_on": "2026-01-15"
+    },
+    {
+      "id": "o22",
+      "element": "med.current_medications",
+      "status": "present",
+      "value": "synthetic list: analgesic, antacid",
+      "observed_on": "2026-01-14"
+    },
+    {
+      "id": "o23",
+      "element": "med.supplements",
+      "status": "present",
+      "value": "none",
+      "observed_on": "2026-01-10"
+    },
+    {
+      "id": "o24",
+      "element": "hist.primary_diagnosis",
+      "status": "present",
+      "value": "synthetic condition A",
+      "observed_on": "2026-01-05"
+    },
+    {
+      "id": "o25",
+      "element": "hist.comorbidities",
+      "status": "present",
+      "value": "synthetic condition B",
+      "observed_on": "2026-01-05"
+    },
+    {
+      "id": "o26",
+      "element": "hist.pregnancy_lactation_status",
+      "status": "present",
+      "value": "not_pregnant_or_lactating",
+      "observed_on": "2026-01-05"
+    },
+    {
+      "id": "o27",
+      "element": "soc.food_insecurity_concern",
+      "status": "present",
+      "value": false,
+      "observed_on": "2025-12-26"
+    },
+    {
+      "id": "o28",
+      "element": "anthro.weight_kg",
+      "status": "present",
+      "value": 70.5,
+      "unit": "kg",
+      "observed_on": "2026-01-08"
+    }
+  ],
+  "expected": {
+    "scope": "in_scope",
+    "gap_elements": [],
+    "calculations": {
+      "bmi": "22.86",
+      "pct_weight_change_vs_previous": "-0.71",
+      "pct_weight_change_vs_usual": "-1.41"
+    },
+    "must_have": [],
+    "must_not_have": [
+      [
+        "conflict",
+        "anthro.weight_kg"
+      ],
+      [
+        "stale_value",
+        "anthro.weight_kg"
+      ]
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "case_id": "SYN-ADULT-022",
+  "title": "Severe acute malnutrition pathway is planned, not active",
+  "intent": "",
+  "synthetic": true,
+  "patient": {
+    "pseudonym": "SYN-0220",
+    "sex_at_birth": "male"
+  },
+  "encounter": {
+    "setting": "inpatient",
+    "pathway": "paediatric_sam",
+    "age_months": 24,
+    "assessment_date": "2026-01-15"
+  },
+  "observations": [
+    {
+      "id": "o01",
+      "element": "anthro.weight_kg",
+      "status": "present",
+      "value": 7,
+      "unit": "kg",
+      "observed_on": "2026-01-15"
+    }
+  ],
+  "expected": {
+    "scope": "refused"
+  }
+}

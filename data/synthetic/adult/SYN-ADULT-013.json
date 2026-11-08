@@ -1,0 +1,79 @@
+{
+  "case_id": "SYN-ADULT-013",
+  "title": "Declared normal and not applicable are not gaps",
+  "intent": "Only an explicit clinician declaration makes a finding normal, and it stays attributed.",
+  "synthetic": true,
+  "patient": {
+    "pseudonym": "SYN-0130",
+    "sex_at_birth": "male"
+  },
+  "encounter": {
+    "setting": "inpatient",
+    "pathway": "adult_general",
+    "age_months": 480,
+    "assessment_date": "2026-01-15"
+  },
+  "observations": [
+    {
+      "id": "o01",
+      "element": "clin.oedema_present",
+      "status": "declared_normal_by_clinician",
+      "observed_on": "2026-01-15",
+      "declared_by": "clinician-synthetic-1"
+    },
+    {
+      "id": "o02",
+      "element": "func.handgrip_strength_kg",
+      "status": "not_applicable",
+      "observed_on": "2026-01-15"
+    }
+  ],
+  "expected": {
+    "scope": "in_scope",
+    "gap_elements": [
+      "anthro.height_cm",
+      "anthro.muac_cm",
+      "anthro.usual_weight_kg",
+      "anthro.weight_kg",
+      "bio.creatinine_umol_l",
+      "bio.glucose_mmol_l",
+      "bio.haemoglobin_g_dl",
+      "bio.magnesium_mmol_l",
+      "bio.phosphate_mmol_l",
+      "bio.potassium_mmol_l",
+      "clin.dysphagia_symptoms",
+      "clin.gi_symptoms",
+      "clin.nfpe_muscle_wasting",
+      "clin.nfpe_subcutaneous_fat_loss",
+      "func.mobility_status",
+      "hist.comorbidities",
+      "hist.primary_diagnosis",
+      "intake.appetite",
+      "intake.diet_history_summary",
+      "intake.npo_status",
+      "intake.oral_intake_percent_usual",
+      "med.current_medications",
+      "med.supplements",
+      "soc.food_insecurity_concern"
+    ],
+    "calculations": {
+      "bmi": "refused",
+      "pct_weight_change_vs_previous": "refused",
+      "pct_weight_change_vs_usual": "refused"
+    },
+    "states": {
+      "clin.oedema_present": "declared_normal_by_clinician",
+      "func.handgrip_strength_kg": "not_applicable"
+    },
+    "must_not_have": [
+      [
+        "gap",
+        "clin.oedema_present"
+      ],
+      [
+        "gap",
+        "func.handgrip_strength_kg"
+      ]
+    ]
+  }
+}

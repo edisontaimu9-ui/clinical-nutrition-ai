@@ -1,0 +1,43 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: cnai_ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # Throwaway database inside the CI job; contains synthetic data only.
+      DATABASE_URL: postgresql://postgres:ci-only-password@localhost:5432/cnai_ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Scanners (synthetic-only and secrets)
+        run: python scripts/scan_repo.py
+      - name: Generated files are current
+        run: |
+          python scripts/gen_reference_sql.py --check
+          python scripts/generate_synthetic.py --check
+          python scripts/gen_review_sheet.py --check
+          python scripts/gen_traceability.py --check
+      - name: Documentation checks
+        run: python scripts/validate_docs.py
+      - name: Tests (unit, safety, database)
+        run: python -m pytest -q

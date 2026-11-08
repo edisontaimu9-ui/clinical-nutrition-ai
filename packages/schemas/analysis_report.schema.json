@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/cnai/analysis.schema.json",
+  "title": "CNAI deterministic analysis report",
+  "type": "object",
+  "required": [
+    "schema",
+    "case_id",
+    "pseudonym",
+    "pathway",
+    "assessment_date",
+    "rule_set",
+    "catalogue",
+    "banner",
+    "scope",
+    "report_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "cnai.analysis/1"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "pseudonym": {
+      "type": "string"
+    },
+    "pathway": {
+      "type": "string"
+    },
+    "assessment_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "rule_set": {
+      "type": "object",
+      "required": [
+        "id",
+        "version",
+        "review_status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "review_status": {
+          "enum": [
+            "draft",
+            "author_approved",
+            "independently_reviewed"
+          ]
+        }
+      }
+    },
+    "catalogue": {
+      "type": "object",
+      "required": [
+        "version",
+        "review_status"
+      ]
+    },
+    "banner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope": {
+      "type": "object",
+      "required": [
+        "status",
+        "reasons"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "in_scope",
+            "refused"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rule_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "element_states": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "state",
+          "recorded",
+          "label"
+        ],
+        "properties": {
+          "state": {
+            "enum": [
+              "present",
+              "not_assessed",
+              "not_applicable",
+              "unknown_or_unreliable",
+              "declared_normal_by_clinician",
+              "conflicting"
+            ]
+          },
+          "recorded": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "calculations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "formula_id",
+          "formula_version",
+          "value",
+          "unit",
+          "inputs",
+          "assumptions"
+        ]
+      }
+    },
+    "calculation_refusals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "formula_id",
+          "formula_version",
+          "reason"
+        ]
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "finding_id",
+          "kind",
+          "rule_id",
+          "rule_version",
+          "criticality",
+          "element_codes",
+          "observation_ids",
+          "message"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "gap",
+              "conflict",
+              "stale_value",
+              "implausible_value"
+            ]
+          },
+          "criticality": {
+            "enum": [
+              "blocking",
+              "important",
+              "optional"
+            ]
+          }
+        }
+      }
+    },
+    "input_errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "observation_id",
+          "error"
+        ]
+      }
+    },
+    "report_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "scope": {
+            "properties": {
+              "status": {
+                "const": "refused"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "findings"
+              ]
+            },
+            {
+              "required": [
+                "calculations"
+              ]
+            },
+            {
+              "required": [
+                "element_states"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

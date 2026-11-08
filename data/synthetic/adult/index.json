@@ -1,0 +1,127 @@
+{
+  "synthetic": true,
+  "generator": "cnai.synthetic",
+  "count": 30,
+  "cases": [
+    {
+      "case_id": "SYN-ADULT-001",
+      "title": "Complete assessment, stable weight"
+    },
+    {
+      "case_id": "SYN-ADULT-002",
+      "title": "Weight and height only"
+    },
+    {
+      "case_id": "SYN-ADULT-003",
+      "title": "Nothing recorded"
+    },
+    {
+      "case_id": "SYN-ADULT-004",
+      "title": "Height recorded, weight missing"
+    },
+    {
+      "case_id": "SYN-ADULT-005",
+      "title": "Height 1.75 entered as centimetres"
+    },
+    {
+      "case_id": "SYN-ADULT-006",
+      "title": "Height entered in metres (converted)"
+    },
+    {
+      "case_id": "SYN-ADULT-007",
+      "title": "Pounds and inches"
+    },
+    {
+      "case_id": "SYN-ADULT-008",
+      "title": "Two different weights on the same day"
+    },
+    {
+      "case_id": "SYN-ADULT-009",
+      "title": "Weight corrected by a superseding entry"
+    },
+    {
+      "case_id": "SYN-ADULT-010",
+      "title": "Nil by mouth but oral intake recorded"
+    },
+    {
+      "case_id": "SYN-ADULT-011",
+      "title": "Weight recorded 45 days before assessment"
+    },
+    {
+      "case_id": "SYN-ADULT-012",
+      "title": "Weight without a date"
+    },
+    {
+      "case_id": "SYN-ADULT-013",
+      "title": "Declared normal and not applicable are not gaps"
+    },
+    {
+      "case_id": "SYN-ADULT-014",
+      "title": "Weight recorded as unreliable"
+    },
+    {
+      "case_id": "SYN-ADULT-015",
+      "title": "Weight fell from 80 to 72 kg over 30 days"
+    },
+    {
+      "case_id": "SYN-ADULT-016",
+      "title": "Only a reported usual weight to compare with"
+    },
+    {
+      "case_id": "SYN-ADULT-017",
+      "title": "Female, not pregnant or lactating as recorded"
+    },
+    {
+      "case_id": "SYN-ADULT-018",
+      "title": "Pregnant: out of scope"
+    },
+    {
+      "case_id": "SYN-ADULT-019",
+      "title": "Lactating: out of scope"
+    },
+    {
+      "case_id": "SYN-ADULT-020",
+      "title": "Female, pregnancy status not recorded"
+    },
+    {
+      "case_id": "SYN-ADULT-021",
+      "title": "Child aged 100 months on the adult pathway"
+    },
+    {
+      "case_id": "SYN-ADULT-022",
+      "title": "Severe acute malnutrition pathway is planned, not active"
+    },
+    {
+      "case_id": "SYN-ADULT-023",
+      "title": "Disabled paediatric element supplied"
+    },
+    {
+      "case_id": "SYN-ADULT-024",
+      "title": "Outpatient: nil-by-mouth status not required"
+    },
+    {
+      "case_id": "SYN-ADULT-025",
+      "title": "Glucose 90 entered as mmol/L (probably mg/dL)"
+    },
+    {
+      "case_id": "SYN-ADULT-026",
+      "title": "Glucose 90 mg/dL converted to mmol/L"
+    },
+    {
+      "case_id": "SYN-ADULT-027",
+      "title": "Appetite recorded with a value outside the allowed list"
+    },
+    {
+      "case_id": "SYN-ADULT-028",
+      "title": "Weight without a unit"
+    },
+    {
+      "case_id": "SYN-ADULT-029",
+      "title": "Weight dated after the assessment"
+    },
+    {
+      "case_id": "SYN-ADULT-030",
+      "title": "Free text containing instructions (synthetic injection string)"
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+# Adult general pathway: rule set v0.1.0 (DRAFT)
+#
+# STATUS: draft. Prepared by engineering from the requirements for review by the product and clinical requirements
+# lead (D-019). Criticality levels, staleness windows (in packages/schemas/data_elements.json) and conflict tolerances
+# are proposals, not clinical standards. Nothing here has been independently reviewed.
+#
+# Wording rule: `why` texts explain what the data are needed for. They never state that a missing value is normal,
+# and they never instruct treatment. They are prompts to the clinician.
+#
+# Sign-off: change `review_status` to author_approved ONLY after the lead has reviewed docs/clinical/rule-review-sheet.md.
+
+rule_set: adult_general_rules
+rule_set_version: "0.1.0"
+review_status: draft
+pathway: adult_general
+
+completeness:
+  - {id: CMP-001, version: "1", element: anthro.weight_kg, criticality: blocking,
+     why: "Needed to calculate BMI and to interpret any change in weight."}
+  - {id: CMP-002, version: "1", element: anthro.height_cm, criticality: blocking,
+     why: "Needed to calculate BMI."}
+  - {id: CMP-003, version: "1", element: hist.pregnancy_lactation_status, criticality: blocking,
+     applies_when: {sex_at_birth: [female, unknown]},
+     why: "Pregnancy and lactation are outside the scope of this pathway and must be excluded before the assessment is interpreted."}
+  - {id: CMP-004, version: "1", element: anthro.usual_weight_kg, criticality: important,
+     why: "Allows weight to be compared with the patient's reported usual weight when no earlier measured weight exists."}
+  - {id: CMP-005, version: "1", element: intake.oral_intake_percent_usual, criticality: important,
+     why: "Recent food intake relative to usual is a core part of the nutrition assessment."}
+  - {id: CMP-006, version: "1", element: intake.appetite, criticality: important,
+     why: "Appetite helps explain recent intake."}
+  - {id: CMP-007, version: "1", element: intake.npo_status, criticality: important,
+     applies_when: {setting: [inpatient]},
+     why: "Nil-by-mouth status determines how intake can be interpreted for inpatients."}
+  - {id: CMP-008, version: "1", element: intake.diet_history_summary, criticality: important,
+     why: "A diet history gives context for intake, preferences and restrictions."}
+  - {id: CMP-009, version: "1", element: clin.nfpe_muscle_wasting, criticality: important,
+     why: "A nutrition-focused physical finding relevant to assessing body composition."}
+  - {id: CMP-010, version: "1", element: clin.nfpe_subcutaneous_fat_loss, criticality: important,
+     why: "A nutrition-focused physical finding relevant to assessing body composition."}
+  - {id: CMP-011, version: "1", element: clin.oedema_present, criticality: important,
+     why: "Oedema can mask changes in measured weight."}
+  - {id: CMP-012, version: "1", element: clin.dysphagia_symptoms, criticality: important,
+     why: "Swallowing difficulty affects how nutrition can be delivered."}
+  - {id: CMP-013, version: "1", element: clin.gi_symptoms, criticality: important,
+     why: "Gastrointestinal symptoms may affect intake and absorption."}
+  - {id: CMP-014, version: "1", element: med.current_medications, criticality: important,
+     why: "Medications can affect appetite, absorption and nutrient needs."}
+  - {id: CMP-015, version: "1", element: hist.primary_diagnosis, criticality: important,
+     why: "The diagnosis recorded by the treating team gives clinical context for the assessment."}
+  - {id: CMP-016, version: "1", element: hist.comorbidities, criticality: important,
+     why: "Relevant comorbidities give clinical context for the assessment."}
+  - {id: CMP-017, version: "1", element: anthro.muac_cm, criticality: optional,
+     why: "An additional anthropometric measure when weight or height cannot be obtained or is unreliable."}
+  - {id: CMP-018, version: "1", element: func.handgrip_strength_kg, criticality: optional,
+     why: "A functional measure that may support the assessment of muscle status."}
+  - {id: CMP-019, version: "1", element: func.mobility_status, criticality: optional,
+     why: "Mobility affects activity and body-composition interpretation."}
+  - {id: CMP-020, version: "1", element: med.supplements, criticality: optional,
+     why: "Supplements contribute to nutrient intake."}
+  - {id: CMP-021, version: "1", element: soc.food_insecurity_concern, criticality: optional,
+     why: "Food access affects what interventions are practical."}
+  - {id: CMP-022, version: "1", element: bio.haemoglobin_g_dl, criticality: optional,
+     why: "A laboratory result that may support the assessment, if it has been measured."}
+  - {id: CMP-023, version: "1", element: bio.glucose_mmol_l, criticality: optional,
+     why: "A laboratory result that may support the assessment, if it has been measured."}
+  - {id: CMP-024, version: "1", element: bio.creatinine_umol_l, criticality: optional,
+     why: "A laboratory result that may support the assessment, if it has been measured."}
+  - {id: CMP-025, version: "1", element: bio.potassium_mmol_l, criticality: optional,
+     why: "A laboratory result that may support the assessment, if it has been measured."}
+  - {id: CMP-026, version: "1", element: bio.phosphate_mmol_l, criticality: optional,
+     why: "A laboratory result that may support the assessment, if it has been measured."}
+  - {id: CMP-027, version: "1", element: bio.magnesium_mmol_l, criticality: optional,
+     why: "A laboratory result that may support the assessment, if it has been measured."}
+
+conflicts:
+  # Two or more live observations of one element on the same date that disagree (different status, or numeric values
+  # further apart than the element's conflict_tolerance). Both values are shown; nothing is resolved automatically.
+  same_day_disagreement:
+    id: CNF-001
+    version: "1"
+    default_criticality: important
+    criticality_by_element: {anthro.weight_kg: blocking, anthro.height_cm: blocking, hist.pregnancy_lactation_status: blocking}
+    message: "Conflicting records for the same date; the clinician needs to resolve which is correct."
+  pairs:
+    - id: CNF-002
+      version: "1"
+      criticality: important
+      a: {element: intake.npo_status, equals: true}
+      b: {element: intake.oral_intake_percent_usual, greater_than: 0}
+      message: "The patient is recorded as nil by mouth but oral intake above zero is also recorded."
+
+staleness:
+  id: STL-001
+  version: "1"
+  criticality: important
+  undated_criticality: important
+  message_old: "The most recent value is older than the review window for this element."
+  message_undated: "The value has no observation date, so its recency cannot be assessed."
+
+implausible:
+  id: IMP-001
+  version: "1"
+  criticality: important
+  # Plausible ranges are wide physiological bounds that catch entry and unit errors; they are not reference ranges.
+
+scope_exclusions:
+  - id: SCP-001
+    version: "1"
+    element: hist.pregnancy_lactation_status
+    refuse_if_value_in: [pregnant, lactating]
+    message: "Pregnancy and lactation are outside the scope of the adult general pathway; no analysis is produced."

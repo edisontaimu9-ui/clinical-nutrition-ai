@@ -1,0 +1,83 @@
+{
+  "case_id": "SYN-ADULT-009",
+  "title": "Weight corrected by a superseding entry",
+  "intent": "",
+  "synthetic": true,
+  "patient": {
+    "pseudonym": "SYN-0090",
+    "sex_at_birth": "male"
+  },
+  "encounter": {
+    "setting": "inpatient",
+    "pathway": "adult_general",
+    "age_months": 480,
+    "assessment_date": "2026-01-15"
+  },
+  "observations": [
+    {
+      "id": "o01",
+      "element": "anthro.weight_kg",
+      "status": "present",
+      "value": 78,
+      "unit": "kg",
+      "observed_on": "2026-01-15"
+    },
+    {
+      "id": "o02",
+      "element": "anthro.weight_kg",
+      "status": "present",
+      "value": 70,
+      "unit": "kg",
+      "observed_on": "2026-01-15",
+      "supersedes": "o01"
+    },
+    {
+      "id": "o03",
+      "element": "anthro.height_cm",
+      "status": "present",
+      "value": 175,
+      "unit": "cm",
+      "observed_on": "2025-12-16"
+    }
+  ],
+  "expected": {
+    "scope": "in_scope",
+    "gap_elements": [
+      "anthro.muac_cm",
+      "anthro.usual_weight_kg",
+      "bio.creatinine_umol_l",
+      "bio.glucose_mmol_l",
+      "bio.haemoglobin_g_dl",
+      "bio.magnesium_mmol_l",
+      "bio.phosphate_mmol_l",
+      "bio.potassium_mmol_l",
+      "clin.dysphagia_symptoms",
+      "clin.gi_symptoms",
+      "clin.nfpe_muscle_wasting",
+      "clin.nfpe_subcutaneous_fat_loss",
+      "clin.oedema_present",
+      "func.handgrip_strength_kg",
+      "func.mobility_status",
+      "hist.comorbidities",
+      "hist.primary_diagnosis",
+      "intake.appetite",
+      "intake.diet_history_summary",
+      "intake.npo_status",
+      "intake.oral_intake_percent_usual",
+      "med.current_medications",
+      "med.supplements",
+      "soc.food_insecurity_concern"
+    ],
+    "calculations": {
+      "bmi": "22.86",
+      "pct_weight_change_vs_previous": "refused",
+      "pct_weight_change_vs_usual": "refused"
+    },
+    "must_not_have": [
+      [
+        "conflict",
+        "anthro.weight_kg"
+      ]
+    ]
+  }
+}

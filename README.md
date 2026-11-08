@@ -1,6 +1,6 @@
 # Clinical Nutrition AI Agent
 
-> **Status: Phase 0 (v0.2) — foundations and documentation only; awaiting owner approval.**
+> **Status: Phase 0 approved (2026-11-08). Phase 1 (adult data model and deterministic core) in progress.**
 > No application code exists yet. This project is **not** a medical device, is **not** approved for clinical use, and must be developed with **synthetic data only** until the gates in [`docs/ROADMAP.md`](docs/ROADMAP.md) are passed.
 
 ## Purpose
@@ -74,7 +74,8 @@ clinical-nutrition-ai/
 │   ├── EVALUATION.md          Testing and clinical evaluation plan
 │   ├── decisions/             Architecture decision log
 │   ├── data/                  Database design (schema-design.sql)
-│   ├── clinical/              Clinical rule specs, KB curation (future)
+│   ├── clinical/              Generated review sheet, sign-off record, KB curation (later)
+│   ├── TRACEABILITY.md        Phase 1 requirements mapped to tests
 │   └── api/                   API specifications (future)
 ├── apps/
 │   ├── api/                   Backend API (Phase 1+)
@@ -113,7 +114,19 @@ Only one phase is worked at a time. Each phase ends with validation and an expli
 
 ## Getting started
 
-Nothing is runnable yet. Review the documents in the order: `README.md` → `CLINICAL_SAFETY.md` → `REQUIREMENTS.md` → `ARCHITECTURE.md` → `SECURITY.md` → `docs/decisions/decision-log.md`, then respond to the open questions at the end of the decision log.
+Phase 1 (adult data model and deterministic core) is built and awaiting approval. It uses synthetic data only.
+
+```
+pip install -r requirements-dev.txt
+python -m pytest -q                                   # unit and safety tests; database tests run when DATABASE_URL is set
+python -m cnai.cli analyse data/synthetic/adult/SYN-ADULT-001.json   # needs PYTHONPATH=packages/core/src
+python scripts/scan_repo.py                           # synthetic-only and secrets scanner
+python scripts/validate_docs.py                       # documents, decisions, traceability
+```
+
+Database tests need a throwaway PostgreSQL 16 database whose name contains `test`, `dev`, `ci` or `synthetic`, for example `DATABASE_URL=postgresql://user@localhost/cnai_test`. GitHub Actions runs everything on every push, so a phone does not need PostgreSQL.
+
+For clinical review start with `docs/clinical/rule-review-sheet.md` and record decisions in `docs/clinical/rule-signoff.md`. Requirement coverage is in `docs/TRACEABILITY.md`.
 
 ## Disclaimer
 

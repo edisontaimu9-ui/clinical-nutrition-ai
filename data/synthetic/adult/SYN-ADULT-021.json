@@ -1,0 +1,37 @@
+{
+  "case_id": "SYN-ADULT-021",
+  "title": "Child aged 100 months on the adult pathway",
+  "intent": "",
+  "synthetic": true,
+  "patient": {
+    "pseudonym": "SYN-0210",
+    "sex_at_birth": "male"
+  },
+  "encounter": {
+    "setting": "inpatient",
+    "pathway": "adult_general",
+    "age_months": 100,
+    "assessment_date": "2026-01-15"
+  },
+  "observations": [
+    {
+      "id": "o01",
+      "element": "anthro.weight_kg",
+      "status": "present",
+      "value": 28,
+      "unit": "kg",
+      "observed_on": "2026-01-15"
+    },
+    {
+      "id": "o02",
+      "element": "anthro.height_cm",
+      "status": "present",
+      "value": 130,
+      "unit": "cm",
+      "observed_on": "2025-12-16"
+    }
+  ],
+  "expected": {
+    "scope": "refused"
+  }
+}

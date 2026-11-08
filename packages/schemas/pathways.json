@@ -1,0 +1,30 @@
+{
+  "_comment": "Pathway registry (FR-POP-01, D-018). Age bands are illustrative defaults set by the engineering draft and MUST be confirmed by the product and clinical requirements lead against national guidance before activation (CLINICAL_SAFETY.md section 2.4). Only adult_general is active.",
+  "version": "0.1.0",
+  "pathways": [
+    {
+      "pathway_code": "adult_general",
+      "label": "Adult general nutrition assessment",
+      "status": "active",
+      "min_age_months": 216,
+      "max_age_months": null,
+      "activated_by_decision": "D-018"
+    },
+    {
+      "pathway_code": "paediatric_general",
+      "label": "Paediatric nutrition assessment",
+      "status": "planned",
+      "min_age_months": 0,
+      "max_age_months": 215,
+      "activated_by_decision": null
+    },
+    {
+      "pathway_code": "paediatric_sam",
+      "label": "Severe acute malnutrition",
+      "status": "planned",
+      "min_age_months": 6,
+      "max_age_months": 59,
+      "activated_by_decision": null
+    }
+  ]
+}

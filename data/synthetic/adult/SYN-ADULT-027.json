@@ -1,0 +1,70 @@
+{
+  "case_id": "SYN-ADULT-027",
+  "title": "Appetite recorded with a value outside the allowed list",
+  "intent": "",
+  "synthetic": true,
+  "patient": {
+    "pseudonym": "SYN-0270",
+    "sex_at_birth": "male"
+  },
+  "encounter": {
+    "setting": "inpatient",
+    "pathway": "adult_general",
+    "age_months": 480,
+    "assessment_date": "2026-01-15"
+  },
+  "observations": [
+    {
+      "id": "o01",
+      "element": "intake.appetite",
+      "status": "present",
+      "value": "fine",
+      "observed_on": "2026-01-15"
+    }
+  ],
+  "expected": {
+    "scope": "in_scope",
+    "gap_elements": [
+      "anthro.height_cm",
+      "anthro.muac_cm",
+      "anthro.usual_weight_kg",
+      "anthro.weight_kg",
+      "bio.creatinine_umol_l",
+      "bio.glucose_mmol_l",
+      "bio.haemoglobin_g_dl",
+      "bio.magnesium_mmol_l",
+      "bio.phosphate_mmol_l",
+      "bio.potassium_mmol_l",
+      "clin.dysphagia_symptoms",
+      "clin.gi_symptoms",
+      "clin.nfpe_muscle_wasting",
+      "clin.nfpe_subcutaneous_fat_loss",
+      "clin.oedema_present",
+      "func.handgrip_strength_kg",
+      "func.mobility_status",
+      "hist.comorbidities",
+      "hist.primary_diagnosis",
+      "intake.appetite",
+      "intake.diet_history_summary",
+      "intake.npo_status",
+      "intake.oral_intake_percent_usual",
+      "med.current_medications",
+      "med.supplements",
+      "soc.food_insecurity_concern"
+    ],
+    "calculations": {
+      "bmi": "refused",
+      "pct_weight_change_vs_previous": "refused",
+      "pct_weight_change_vs_usual": "refused"
+    },
+    "states": {
+      "intake.appetite": "unknown_or_unreliable"
+    },
+    "must_have": [
+      [
+        "implausible_value",
+        "intake.appetite"
+      ]
+    ]
+  }
+}

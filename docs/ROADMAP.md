@@ -1,6 +1,6 @@
 # Phased Implementation Roadmap
 
-Version 0.2 · Status: **Draft for approval**
+Version 0.3 · Status: **Phase 0 approved 2026-11-08**
 
 Phases are sized by **gates, not dates**. Only one phase is active at a time. A phase ends with validation against its exit criteria and an explicit written approval before the next begins. Requirement IDs refer to [`REQUIREMENTS.md`](../REQUIREMENTS.md).
 
@@ -15,9 +15,9 @@ Planning assumptions (v0.2):
 **Deliverables:** README, REQUIREMENTS, ARCHITECTURE, SECURITY, CLINICAL_SAFETY, decision log, ROADMAP, EVALUATION, initial folder structure, database design reference.
 
 **Exit criteria**
-- [ ] Project owner reviews the v0.2 documents and approves Phase 0.
-- [ ] Open questions Q-02, Q-04, Q-05, Q-07 to Q-12 answered or consciously deferred (Q-01, Q-03 and Q-06 are answered).
-- [ ] Decisions D-001 to D-019 moved to Accepted or revised.
+- [x] Project owner reviews the v0.2 documents and approves Phase 0 (2026-11-08).
+- [x] Open questions Q-02, Q-04, Q-05, Q-07 to Q-12 answered or consciously deferred (Q-01, Q-03 and Q-06 are answered).
+- [x] Decisions D-001 to D-019 moved to Accepted or revised.
 
 ## Phase 1 — Data model, synthetic data, deterministic core (adult pathway)
 
@@ -27,11 +27,13 @@ Planning assumptions (v0.2):
 
 **Exit criteria**
 - [ ] Calculators match clinician-verified reference cases (100% agreement on the reference set).
-- [ ] Every missing-vs-normal trap case yields `not_assessed` / gap, never "normal".
-- [ ] DB constraint tests prove invalid state/value combinations are rejected.
-- [ ] Planned pathways (paediatric, SAM) and out-of-band ages are refused by tests.
+- [x] Every missing-vs-normal trap case yields `not_assessed` / gap, never "normal".
+- [x] DB constraint tests prove invalid state/value combinations are rejected.
+- [x] Planned pathways (paediatric, SAM) and out-of-band ages are refused by tests.
 - [ ] Rule set approved by the product and clinical requirements lead (`author_approved`); independent review requested and its status recorded.
-- [ ] No real data anywhere; scanners green.
+- [x] No real data anywhere; scanners green.
+
+**Status (2026-11-08):** engineering complete and awaiting the owner's approval. Two exit items are clinical and remain open by design (D-022): verification of the calculator reference cases, and `author_approved` status for the rule set with independent review requested. Review material: `docs/clinical/rule-review-sheet.md`.
 
 ## Phase 2 — Security and audit baseline
 
