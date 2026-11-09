@@ -1,0 +1,4 @@
+# Development and benchmark build: synthetic data only. Hosted adapters may be included (still gated per request).
+profile: synthetic-dev
+packages: [cnai, cnai_security, cnai_llm, cnai_llm_hosted]
+data_class: synthetic
