@@ -11,7 +11,7 @@ errors, warnings = [], []
 required = [
     "README.md", "ARCHITECTURE.md", "REQUIREMENTS.md", "SECURITY.md", "CLINICAL_SAFETY.md",
     "docs/decisions/decision-log.md", "docs/ROADMAP.md", "docs/EVALUATION.md",
-    "docs/data/schema-design.sql", ".gitignore", "docs/TRACEABILITY.md", "docs/clinical/rule-review-sheet.md",
+    "docs/data/schema-design.sql", ".gitignore", "docs/TRACEABILITY.md", "docs/THREAT_MODEL.md", "docs/ops/recovery_targets.yaml", "docs/clinical/rule-review-sheet.md",
     "docs/clinical/rule-signoff.md", ".github/workflows/ci.yml", "requirements-dev.txt",
 ]
 for r in required:

@@ -1,0 +1,7 @@
+# Recovery targets (NFR-REL-01). PROPOSED values for engineering to test against; the owner and the privacy and
+# security lead confirm them before any real-data deployment (decision D-024).
+status: proposed
+rpo_minutes: 15        # at most this much recent data may be lost
+rto_minutes: 240       # service restored within this time
+backup_retention_days: 35
+restore_drill_frequency: quarterly

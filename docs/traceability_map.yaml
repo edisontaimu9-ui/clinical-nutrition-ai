@@ -171,3 +171,85 @@ NFR-PERF-01:
   tests:
     - tests/unit/test_schemas_perf_obs.py::test_single_case_p95_under_two_seconds
   note: sanity bound on the CI runner for the engine only. The 95th-percentile target is a proposal and is not benchmarked end to end.
+# ---------------------------------------------------------------------------------------------- Phase 2
+FR-AUD-01:
+  status: partial
+  tests:
+    - tests/integration/test_db_audit_chain.py::test_data_changes_are_logged_automatically_with_the_actor
+    - tests/integration/test_db_audit_chain.py::test_permission_changes_are_logged
+    - tests/integration/test_db_audit_chain.py::test_governance_and_instance_configuration_changes_are_logged
+    - tests/integration/test_db_audit_chain.py::test_application_events_use_a_controlled_vocabulary_and_the_session_actor
+    - tests/integration/test_db_audit_chain.py::test_the_audit_log_never_stores_clinical_values
+    - tests/integration/test_db_security_rls.py::test_break_glass_is_audited_with_both_people
+  note: creates, updates and permission changes are logged by database triggers. Reads, exports, approvals and rejections are logged only when the application calls record_event, and no API exists yet to do so, so read-logging is not enforced end to end. Approve, reject and export arrive with Phase 6.
+FR-AUD-03:
+  status: automated
+  tests:
+    - tests/integration/test_db_audit_chain.py::test_audit_events_cannot_be_updated_deleted_or_truncated_even_by_the_owner
+    - tests/integration/test_db_audit_chain.py::test_a_fresh_chain_verifies_in_python_and_in_sql_and_they_agree
+    - tests/integration/test_db_audit_chain.py::test_the_python_and_sql_hash_formulas_agree_event_by_event
+    - tests/integration/test_db_audit_chain.py::test_editing_an_event_is_detected
+    - tests/integration/test_db_audit_chain.py::test_editing_details_actor_or_time_is_detected
+    - tests/integration/test_db_audit_chain.py::test_deleting_an_event_from_the_middle_is_detected
+    - tests/integration/test_db_audit_chain.py::test_deleting_the_first_event_is_detected
+    - tests/integration/test_db_audit_chain.py::test_a_forged_event_with_a_valid_looking_hash_but_wrong_link_is_detected
+    - tests/integration/test_db_audit_chain.py::test_reordering_events_is_detected
+    - tests/integration/test_db_audit_chain.py::test_a_complete_rewrite_with_recomputed_hashes_is_caught_by_the_anchor
+  note: a chain alone cannot stop an owner who rewrites history and recomputes every hash; the signed anchor catches that, but only if it is stored outside the database. No scheduled job exports anchors yet.
+FR-ADM-01:
+  status: partial
+  tests:
+    - tests/integration/test_db_security_rls.py::test_admin_manages_users_in_own_organisation_only
+    - tests/integration/test_db_security_rls.py::test_admin_cannot_grant_roles_to_themselves_or_forge_the_grantor
+    - tests/integration/test_db_security_rls.py::test_admin_has_no_access_to_patient_content
+    - tests/unit/test_security_auth_permissions.py::test_the_matrix_matches_the_security_document_role_table
+  note: least-privilege roles and administration rules are tested. Periodic access-review reports and a user-management interface are not built.
+FR-GOV-03:
+  status: automated
+  tests:
+    - tests/integration/test_db_security_services.py::test_clinical_mode_refuses_to_start_while_the_reviewer_is_vacant_and_rules_are_unreviewed
+    - tests/integration/test_db_security_services.py::test_real_data_makes_the_instance_clinical_even_in_shadow_mode
+    - tests/integration/test_db_security_services.py::test_a_fully_governed_clinical_instance_passes
+    - tests/integration/test_db_security_services.py::test_each_clinical_requirement_is_enforced_on_its_own
+    - tests/integration/test_db_security_services.py::test_an_unreviewed_rule_in_the_database_blocks_clinical_start
+  note: the check is a function that a service must call before serving requests. No service exists yet, so nothing calls it in production; knowledge-base sources are checked once a knowledge base exists (Phase 4).
+NFR-SEC-01:
+  status: partial
+  tests:
+    - tests/integration/test_db_security_services.py::test_startup_cannot_be_satisfied_by_the_development_key_provider_or_local_tls_alone
+  note: clinical start-up refuses a database connection without TLS. TLS between users and services and between internal services is deployment configuration that does not exist yet.
+NFR-SEC-02:
+  status: partial
+  tests:
+    - tests/unit/test_security_crypto.py::test_round_trip
+    - tests/unit/test_security_crypto.py::test_ciphertext_cannot_be_moved_to_another_record
+    - tests/unit/test_security_crypto.py::test_a_truncated_backup_is_refused_and_leaves_no_output
+    - tests/integration/test_db_security_services.py::test_identifiers_round_trip_encrypted_and_never_appear_in_plaintext
+    - tests/integration/test_backup_restore_drill.py::test_a_backup_is_encrypted_restored_and_matches_the_source
+  note: field-level envelope encryption of identifiers and encrypted backups work and are tested with a development key provider. A managed key service (KMS or HSM) and encryption of database volumes and object storage are infrastructure decisions not yet made.
+NFR-SEC-03:
+  status: automated
+  tests:
+    - tests/integration/test_db_security_rls.py::test_a_clinician_sees_only_patients_in_their_own_care
+    - tests/integration/test_db_security_rls.py::test_writes_to_another_clinicians_patient_are_refused
+    - tests/integration/test_db_security_rls.py::test_application_roles_are_not_superusers_owners_or_rls_bypassers
+    - tests/integration/test_db_security_rls.py::test_every_clinical_table_with_a_patient_or_encounter_key_has_row_security
+    - tests/unit/test_security_auth_permissions.py::test_admin_auditor_and_engineer_have_no_patient_permissions
+NFR-SEC-04:
+  status: partial
+  tests:
+    - tests/safety/test_safety_rules.py::test_rule8_the_core_package_has_no_network_or_llm_imports
+  note: the deterministic core and the security package contain no LLM or hosted-service calls. Egress blocking and the hosted-LLM gate (NFR-SEC-09) need a network layer and an LLM gateway that do not exist yet (Phase 5).
+NFR-SEC-05:
+  status: partial
+  tests:
+    - tests/unit/test_security_auth_permissions.py::test_a_password_only_token_is_refused
+    - tests/unit/test_security_auth_permissions.py::test_alg_none_and_hmac_confusion_are_refused
+    - tests/integration/test_db_security_services.py::test_roles_in_the_token_are_ignored_and_unknown_or_inactive_users_are_refused
+  note: token verification with a required MFA claim is implemented and tested. The self-hosted identity provider, the login flow, session timeout and session revocation are not built, so MFA is not yet enforced for real users.
+NFR-REL-01:
+  status: partial
+  tests:
+    - tests/integration/test_backup_restore_drill.py::test_a_backup_is_encrypted_restored_and_matches_the_source
+    - tests/integration/test_backup_restore_drill.py::test_a_drill_that_loses_data_is_reported_as_failed
+  note: the drill works and fails loudly when data is lost. The targets in docs/ops/recovery_targets.yaml are proposals the owner has not confirmed, and the drill has only run on small synthetic data.

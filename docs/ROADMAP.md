@@ -42,11 +42,13 @@ Planning assumptions (v0.2):
 **Requirements:** FR-AUD-01/03, FR-ADM-01, FR-GOV-03, NFR-SEC-01…05, NFR-REL-01.
 
 **Exit criteria**
-- [ ] RLS tests: cross-patient and cross-facility access impossible for each role.
-- [ ] Audit chain verification passes and detects deliberate tampering in tests.
-- [ ] Restore drill succeeds within agreed RPO/RTO.
-- [ ] Clinical mode refuses to start while the independent reviewer role is vacant or rules are unreviewed (tested).
-- [ ] Security review of auth and data layer completed.
+- [x] RLS tests: cross-patient and cross-facility access impossible for each role.
+- [x] Audit chain verification passes and detects deliberate tampering in tests.
+- [ ] Restore drill succeeds within agreed RPO/RTO. (Drill built and passing against proposed targets; the owner has not agreed the targets.)
+- [x] Clinical mode refuses to start while the independent reviewer role is vacant or rules are unreviewed (tested; a service must still call the check).
+- [ ] Security review of auth and data layer completed. (Not done: needs a reviewer other than the author; see docs/THREAT_MODEL.md.)
+
+**Status (2026-11-09):** engineering built and tested; two exit items stay open by design: owner-agreed recovery targets and an independent security review. Several parts of the scope are deliberately not built because they need decisions or infrastructure that do not exist yet (identity provider, key service, TLS); the list is in SECURITY.md section 16.
 
 ## Phase 3 — Provider-neutral LLM gateway, evaluation harness, backend bake-off
 

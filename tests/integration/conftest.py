@@ -119,3 +119,33 @@ def expect_violation(conn, prefix, sql, params=()):
         with conn.transaction():
             conn.execute(sql, params)
     assert prefix in str(info.value), f"expected {prefix!r} in {info.value}"
+
+
+# ---------------------------------------------------------------- Phase 2: acting as an application role ---
+GRANT_ROLES = ("clinician", "trainee", "supervisor", "clinical_safety_lead", "admin", "auditor", "engineer")
+
+
+def grant(conn, user, role, by=None):
+    """Record an iam.role_grant as the superuser setup role (RLS does not apply)."""
+    by = by or user
+    conn.execute("INSERT INTO iam.role_grant (user_id, role, granted_by) VALUES (%s, %s, %s)", (user, role, by))
+
+
+def act(conn, user, db_role="cnai_clinician", *, app_role=None):
+    """Become an application role with a request context. Everything after this runs under RLS until reset(conn)."""
+    conn.execute("RESET ROLE")
+    conn.execute(f"SET LOCAL ROLE {db_role}")
+    conn.execute("SELECT set_config('app.user_id', %s, true)", (str(user) if user else "",))
+    conn.execute("SELECT set_config('app.role', %s, true)", (app_role or db_role,))
+
+
+def reset(conn):
+    conn.execute("RESET ROLE")
+
+
+def denied(conn, sql, params=(), exc=(psycopg.errors.InsufficientPrivilege,)):
+    """Run a statement in a savepoint and assert it is refused with a privilege or row-security error."""
+    with pytest.raises(exc) as info:
+        with conn.transaction():
+            conn.execute(sql, params)
+    return info.value

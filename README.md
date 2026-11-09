@@ -68,6 +68,7 @@ clinical-nutrition-ai/
 ├── REQUIREMENTS.md            Functional and non-functional requirements
 ├── ARCHITECTURE.md            Architecture, agents, database, APIs, LLM strategy
 ├── SECURITY.md                Privacy, security and data protection
+│   (docs/THREAT_MODEL.md      Threat model v1)
 ├── CLINICAL_SAFETY.md         Clinical scope, hazards, human-in-the-loop workflow
 ├── docs/
 │   ├── ROADMAP.md             Phased plan with exit gates
@@ -114,7 +115,7 @@ Only one phase is worked at a time. Each phase ends with validation and an expli
 
 ## Getting started
 
-Phase 1 (adult data model and deterministic core) is built and awaiting approval. It uses synthetic data only.
+Phases 1 (adult data model and deterministic core) and 2 (security and audit baseline) are built. Phase 2 has two exit items open (see `docs/ROADMAP.md`). It uses synthetic data only.
 
 ```
 pip install -r requirements-dev.txt
@@ -122,6 +123,7 @@ python -m pytest -q                                   # unit and safety tests; d
 python -m cnai.cli analyse data/synthetic/adult/SYN-ADULT-001.json   # needs PYTHONPATH=packages/core/src
 python scripts/scan_repo.py                           # synthetic-only and secrets scanner
 python scripts/validate_docs.py                       # documents, decisions, traceability
+python scripts/restore_drill.py                       # backup and restore drill (needs DATABASE_URL, pg_dump)
 ```
 
 Database tests need a throwaway PostgreSQL 16 database whose name contains `test`, `dev`, `ci` or `synthetic`, for example `DATABASE_URL=postgresql://user@localhost/cnai_test`. GitHub Actions runs everything on every push, so a phone does not need PostgreSQL.

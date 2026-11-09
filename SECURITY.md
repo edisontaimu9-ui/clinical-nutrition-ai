@@ -41,7 +41,7 @@ This document sets the minimum security and privacy requirements. It is not lega
 Controls:
 
 - Role-based access control plus attribute checks (facility, care relationship).
-- **PostgreSQL row-level security** on all patient-related tables; `FORCE ROW LEVEL SECURITY`; per-request session context (`app.user_id`, `app.org_id`).
+- **PostgreSQL row-level security** on all patient-related tables; per-request session context (`app.user_id`). The organisation is looked up from the active user, not supplied by the client. RLS is ENABLED rather than FORCED because the SECURITY DEFINER guard functions run as the owner; the owner role is migration-only and no application role owns a table (D-024).
 - Separate DB roles for each service; no application role is table owner or superuser.
 - Quarterly access reviews; automatic deprovisioning on role change.
 - **Break-glass** access: justification, time limit, second-person approval where feasible, high-priority audit alert and post-hoc review.
@@ -209,3 +209,9 @@ Create and maintain a register mapping each applicable legal and regulatory requ
 | 5 | Prompt-injection and leakage test suites passing |
 | 6 | UI security review (CSP, session handling), pen test of API |
 | 7 | Real-data inference mode implemented (local or approved framework); DPIA, ethics approval, penetration test, incident-response exercise, go/no-go security sign-off |
+
+## 16. Implementation status (Phase 2)
+
+Built and tested (see `docs/TRACEABILITY.md` for the exact tests): least-privilege database roles; row-level security on patient-related tables; care relationships; read-only break-glass access with second-person approval; append-only hash-chained audit log with an independent verifier and signed anchors; field-level envelope encryption and an identity vault; encrypted backups with a restore drill; token verification with a required MFA claim; an application authorisation matrix; start-up governance checks. Threat model v1 is in `docs/THREAT_MODEL.md`.
+
+**Not built or not decided:** the self-hosted identity provider and login flow; a managed key service (only a development key provider exists); TLS and network configuration; volume and object-storage encryption; scheduled anchor export and verification; alerting on break-glass and verification failures; periodic access-review reports; recovery targets confirmed by the owner; **independent security review** (required by the Phase 2 exit criteria). Until these are done this system must not hold real patient data.

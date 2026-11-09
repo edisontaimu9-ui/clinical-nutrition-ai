@@ -1,6 +1,6 @@
 # Decision Log
 
-Version 0.4 · Phase 1 decisions D-020 to D-022 added as Proposed · Phase 0 status: **approved by the project owner on 2026-11-08**. Changes since v0.2: all decisions D-001 to D-019 moved to Accepted; the suggested defaults for all open questions were accepted (see the questions table); Phase 1 started.
+Version 0.4 · Phase 1 decisions D-020 to D-023 and Phase 2 decision D-024 added as Proposed · Phase 0 status: **approved by the project owner on 2026-11-08**. Changes since v0.2: all decisions D-001 to D-019 moved to Accepted; the suggested defaults for all open questions were accepted (see the questions table); Phase 1 started.
 
 Architecture and clinical-design decisions for the Clinical Nutrition AI Agent. Format: lightweight ADR. Never delete entries; supersede them.
 
@@ -35,6 +35,7 @@ Status values: Proposed · Accepted · Superseded · Rejected.
 | D-021 | Phase 1 deterministic core: catalogue as single source of truth, exact decimal arithmetic, no LLM | Proposed |
 | D-022 | Clinical sign-off is a recorded human act; software never marks content reviewed | Proposed |
 | D-023 | Setting priorities for Malawi: low-cost measures first; special circumstances recorded, pregnancy deferred | Proposed |
+| D-024 | Phase 2 security design: database roles, row-level security with owner exemption, break-glass, anchored audit chain, key provider interface | Proposed |
 
 ---
 
@@ -167,6 +168,12 @@ Status values: Proposed · Accepted · Superseded · Rejected.
 - **Decision:** Rule set v0.2.0: MUAC becomes `important` (low-cost, usable when weight or height cannot be obtained). Completeness rules for handgrip strength, serum phosphate and serum magnesium are retired (ids never reused); the elements can still be recorded. Dialysis, tube or intravenous feeding and critical illness are added as optional elements, are in scope, and their prompts state that the rules do not yet adjust for them (adjusting rules are future clinical work). Pregnancy and lactation remain refused by the adult pathway because they need their own reference values and reviewed logic; they are to be added as a separate planned pathway. Same-day weight tolerance stays at 0.5 kg, other conflict tolerances and the weight-change and energy decisions stay as proposed and deferred respectively.
 - **Consequences:** Gap lists fit the setting better. Nothing here is a clinical standard until the owner signs `docs/clinical/rule-signoff.md`. Special-circumstance patients get a visible limitation note rather than silent standard treatment.
 - **Alternatives:** Refuse special circumstances (rejected by owner: cover all); analyse pregnancy under the adult rules (rejected: unreviewed and unsafe to assume).
+
+## D-024 · Phase 2 security design
+- **Context:** Phase 2 must make cross-patient and cross-facility access impossible, make the audit log tamper-evident, protect identifiers and backups, and refuse clinical start-up without governance, with no cloud services, key service or identity provider chosen yet.
+- **Decision:** (1) NOLOGIN database roles per function (clinician, safety lead, admin, auditor, identity service, auth service); the application logs in as a member and runs `SET LOCAL ROLE` per request. (2) Row-level security is ENABLED, not FORCED, because the SECURITY DEFINER helper and guard functions run as the table owner and must see all rows; the owner role is migration-only, no application role may own a table, be a superuser or bypass RLS (tested). This deliberately differs from the earlier SECURITY.md wording ("FORCE ROW LEVEL SECURITY"). (3) The organisation is derived from the active user in the database, never supplied by the client; roles come from `iam.role_grant`, never from the token. (4) Patients are created through `sec.register_patient` so the creator gets a care relationship; care is shared through `sec.grant_care`. (5) Break-glass is read-only, 1 to 24 hours, needs a second person (supervisor or clinical safety lead), and is logged. (6) The audit log is a SHA-256 hash chain written under an advisory lock by a database function; the actor comes from the session; application events use a controlled vocabulary; a second, independent verifier lives in Python; chain heads are exported as HMAC-signed anchors that must be stored outside the database. (7) Keys sit behind a `KeyProvider` interface; the development provider is refused in clinical mode. (8) Backups use chunked AES-256-GCM and are checked by a restore drill. (9) Recovery targets in `docs/ops/recovery_targets.yaml` are proposals.
+- **Consequences:** Strong isolation can be tested without external services. Residual risks are in `docs/THREAT_MODEL.md`: an owner who recomputes the whole chain is caught only by external anchors, and anchors are not yet exported on a schedule. A managed key service, TLS, and the identity provider remain to be chosen and built.
+- **Alternatives:** FORCE RLS with an owner-exempt policy (rejected for Phase 2: more moving parts, same guarantee for app roles); HMAC chain keyed inside the database (rejected: the key would live next to the data it protects); application-only authorisation (rejected: NFR-SEC-03 requires the database to enforce it too).
 
 ---
 
