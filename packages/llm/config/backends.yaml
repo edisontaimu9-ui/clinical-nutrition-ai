@@ -1,0 +1,49 @@
+# Model and provider version registry (FR-ADM-02, NFR-ARC-03). Changing the active backend is a change to this file or to the
+# CNAI_LLM_BACKEND environment variable, followed by an evaluation run. Nothing else in the system changes.
+#
+# HOSTED ENTRIES ARE TEMPLATES. They stay `enabled: false` until the project owner has (1) chosen a provider, (2) recorded the
+# provider's terms (retention, training use, processing location, sub-processors, deletion) in the decision log and put its
+# id in `provider_terms_ref`, (3) pinned an exact model version, and (4) set a spend cap. The gate refuses otherwise.
+registry_version: "0.1.0"
+active_backend: mock-faithful
+fallback_backend: null     # to be set after the bake-off (Phase 3 exit criterion)
+
+backends:
+  mock-faithful:
+    mode: mock
+    provider: project
+    model_id: mock-deterministic
+    model_version: "1"
+    adapter: "cnai_llm.mock:MockBackend"
+    status: approved_for_testing
+    params: {behaviour: faithful}
+
+  hosted-openai-compatible-template:
+    mode: hosted
+    provider: TO_BE_CHOSEN
+    model_id: TO_BE_CHOSEN
+    model_version: TO_BE_PINNED          # exact snapshot or version; "latest" is refused
+    adapter: "cnai_llm_hosted.openai_compat:OpenAICompatBackend"
+    endpoint: "https://api.example.invalid/v1"
+    endpoint_allowlist: ["api.example.invalid"]
+    api_key: {env: CNAI_LLM_API_KEY}     # or {file: ~/.config/cnai/llm_key} (chmod 600, outside the repository)
+    enabled: false
+    status: candidate
+    provider_terms_ref: null             # decision-log id once terms are recorded
+    params: {temperature: 0, max_output_tokens: 1500, seed: 7, timeout_s: 60, json_mode: false}
+    budget: {max_cost_per_day: 2.0, max_calls_per_minute: 10, max_output_tokens: 2000, price_in_per_1k: 0.0, price_out_per_1k: 0.0}
+
+  hosted-anthropic-messages-template:
+    mode: hosted
+    provider: TO_BE_CHOSEN
+    model_id: TO_BE_CHOSEN
+    model_version: TO_BE_PINNED
+    adapter: "cnai_llm_hosted.anthropic_messages:AnthropicMessagesBackend"
+    endpoint: "https://api.example.invalid"
+    endpoint_allowlist: ["api.example.invalid"]
+    api_key: {env: CNAI_LLM_API_KEY}
+    enabled: false
+    status: candidate
+    provider_terms_ref: null
+    params: {temperature: 0, max_output_tokens: 1500, timeout_s: 60, api_version: "2023-06-01"}
+    budget: {max_cost_per_day: 2.0, max_calls_per_minute: 10, max_output_tokens: 2000, price_in_per_1k: 0.0, price_out_per_1k: 0.0}

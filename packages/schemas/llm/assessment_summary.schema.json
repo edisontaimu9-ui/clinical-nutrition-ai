@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/cnai/llm/assessment_summary.schema.json",
+  "title": "Assessment summary (Phase 3 benchmark task)",
+  "type": "object",
+  "required": ["statements"],
+  "additionalProperties": false,
+  "properties": {
+    "statements": {
+      "type": "array",
+      "maxItems": 80,
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "text"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "pattern": "^S[0-9]{1,3}$"},
+          "kind": {"enum": ["observation", "calculation", "gap", "conflict", "clinician_prompt"]},
+          "text": {"type": "string", "minLength": 1, "maxLength": 400},
+          "observation_ids": {"type": "array", "items": {"type": "string", "maxLength": 40}, "maxItems": 20},
+          "calculation_ids": {"type": "array", "items": {"type": "string", "maxLength": 80}, "maxItems": 20},
+          "finding_ids": {"type": "array", "items": {"type": "string", "maxLength": 120}, "maxItems": 20},
+          "element_codes": {"type": "array", "items": {"type": "string", "maxLength": 60}, "maxItems": 20}
+        }
+      }
+    }
+  }
+}

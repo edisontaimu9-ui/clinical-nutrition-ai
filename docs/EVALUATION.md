@@ -51,6 +51,8 @@ Each safety rule in README.md has at least one test here (NFR-SAF-02). Any criti
 
 ## 4. Model benchmark (Phase 3)
 
+**Status:** the harness (`packages/llm/src/cnai_llm/evaluation.py`, `scripts/run_benchmark.py`) is built and validated with scripted mock backends (`docs/evaluation/benchmark-mock-harness-validation.md`); it shows the verifier catches fabrication, missing-as-normal, dropped conflicts, injection and invalid JSON. No real model has been benchmarked. Gates in code are proposals until the clinical lead sets them.
+
 Compare candidate backends (ARCHITECTURE.md §10.4) on the same synthetic set: the mock backend, hosted model(s) in mode S and, once hardware exists, local open-weight models at multiple quantisation levels. Results are reported **per backend** and do not transfer: any new backend, provider model version or quantisation re-runs the full suite.
 
 | Metric | Definition | Proposed gate |

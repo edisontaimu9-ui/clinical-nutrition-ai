@@ -37,6 +37,8 @@ jobs:
           python scripts/generate_synthetic.py --check
           python scripts/gen_review_sheet.py --check
           python scripts/gen_traceability.py --check
+      - name: Build profiles (real-data build has no hosted adapter)
+        run: python scripts/check_build_profile.py
       - name: Documentation checks
         run: python scripts/validate_docs.py
       - name: Tests (unit, safety, database)

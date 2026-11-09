@@ -1,6 +1,6 @@
 # Decision Log
 
-Version 0.4 · Phase 1 decisions D-020 to D-023 and Phase 2 decision D-024 added as Proposed · Phase 0 status: **approved by the project owner on 2026-11-08**. Changes since v0.2: all decisions D-001 to D-019 moved to Accepted; the suggested defaults for all open questions were accepted (see the questions table); Phase 1 started.
+Version 0.5 · Phase 2 approved by the project owner on 2026-11-09 with two exit items still open (owner-agreed recovery targets; independent security review) · Phase 3 engineering built (D-025); provider selection and benchmark open · Phase 1 decisions D-020 to D-023 and Phase 2 decision D-024 added as Proposed · Phase 0 status: **approved by the project owner on 2026-11-08**. Changes since v0.2: all decisions D-001 to D-019 moved to Accepted; the suggested defaults for all open questions were accepted (see the questions table); Phase 1 started.
 
 Architecture and clinical-design decisions for the Clinical Nutrition AI Agent. Format: lightweight ADR. Never delete entries; supersede them.
 
@@ -36,6 +36,7 @@ Status values: Proposed · Accepted · Superseded · Rejected.
 | D-022 | Clinical sign-off is a recorded human act; software never marks content reviewed | Proposed |
 | D-023 | Setting priorities for Malawi: low-cost measures first; special circumstances recorded, pregnancy deferred | Proposed |
 | D-024 | Phase 2 security design: database roles, row-level security with owner exemption, break-glass, anchored audit chain, key provider interface | Proposed |
+| D-025 | Phase 3 LLM gateway design: provider-neutral interface, separate hosted adapter package, per-request gates, verified output, hashed audit | Proposed |
 
 ---
 
@@ -176,6 +177,13 @@ Status values: Proposed · Accepted · Superseded · Rejected.
 - **Alternatives:** FORCE RLS with an owner-exempt policy (rejected for Phase 2: more moving parts, same guarantee for app roles); HMAC chain keyed inside the database (rejected: the key would live next to the data it protects); application-only authorisation (rejected: NFR-SEC-03 requires the database to enforce it too).
 
 ---
+
+## D-025 · Phase 3 LLM gateway design
+- **Status:** Proposed (engineering). Provider choice and thresholds are owner decisions, still open.
+- **Context:** Phase 3 needs one provider-neutral way to call models that can run with no network (mock), can use a hosted model on synthetic data only, and cannot be switched to a hosted model by accident on real data.
+- **Decision:** (1) One `Gateway.generate` entry point with a `Backend` protocol; no provider SDKs, only standard-library HTTP in one transport module. (2) Hosted adapters live in a separate package, `cnai_llm_hosted`, excluded by the real-data build profile and checked in CI. (3) Hosted calls pass gates on every request: build profile, instance data class and mode read live, case synthetic flag looked up by the gate, backend enabled, provider terms recorded, pinned version, endpoint allow-list, key present, identifier scan of the data block, spend and rate caps. (4) Output is validated by project code against a schema with one repair retry, then a deterministic verifier; any failure returns "unable to draft". (5) Every run is audited with hashes and ids only (migration 0006). (6) Backends, versions and prompts sit in `packages/llm/config/backends.yaml`; hosted entries ship as disabled templates. (7) The benchmark task is a test vehicle (`assessment_summary_v0`), not the Phase 5 ADIME draft. Verifier wording rules are proposals for the clinical lead.
+- **Consequences:** The harness is validated with scripted backends. No real model has been measured: that needs the owner to choose a provider, record its terms, supply a key outside the repository and set a spend cap (F-02). Primary and fallback backends and the validity threshold remain open.
+- **Alternatives:** Provider SDKs (rejected: dependency and egress surface, NFR-ARC-02); one package with a runtime flag only (rejected: real-data builds must not contain the adapter).
 
 ## Open questions for the project owner
 

@@ -48,7 +48,7 @@ Planning assumptions (v0.2):
 - [x] Clinical mode refuses to start while the independent reviewer role is vacant or rules are unreviewed (tested; a service must still call the check).
 - [ ] Security review of auth and data layer completed. (Not done: needs a reviewer other than the author; see docs/THREAT_MODEL.md.)
 
-**Status (2026-11-09):** engineering built and tested; two exit items stay open by design: owner-agreed recovery targets and an independent security review. Several parts of the scope are deliberately not built because they need decisions or infrastructure that do not exist yet (identity provider, key service, TLS); the list is in SECURITY.md section 16.
+**Status (2026-11-09):** approved by the owner on 2026-11-09 to proceed to Phase 3; engineering built and tested; two exit items stay open by design and are carried forward: owner-agreed recovery targets and an independent security review. Several parts of the scope are deliberately not built because they need decisions or infrastructure that do not exist yet (identity provider, key service, TLS); the list is in SECURITY.md section 16.
 
 ## Phase 3 — Provider-neutral LLM gateway, evaluation harness, backend bake-off
 
@@ -57,11 +57,13 @@ Planning assumptions (v0.2):
 **Requirements:** FR-AUD-02, FR-ADM-02, NFR-SEC-04/08/09/10, NFR-SAF-05, NFR-PERF-02/03, NFR-ARC-01…06.
 
 **Exit criteria**
-- [ ] Hosted-gate tests: hosted calls are refused for non-synthetic cases and in any instance recorded as real-data; a real-data build profile contains no hosted adapter.
-- [ ] Switching backend (mock to hosted) works by configuration only, with no change to rules, calculators, schemas or review workflow.
+- [x] Hosted-gate tests: hosted calls are refused for non-synthetic cases and in any instance recorded as real-data; a real-data build profile contains no hosted adapter.
+- [x] Switching backend (mock to hosted) works by configuration only, with no change to rules, calculators, schemas or review workflow.
 - [ ] Primary and fallback backends chosen with recorded provider terms or licence review, pinned versions and benchmark results (D-012 and D-017 updated).
 - [ ] Structured-output validity at or above the threshold set by the product and clinical requirements lead.
-- [ ] Spend caps and key-handling checks in place.
+- [x] Spend caps and key-handling checks in place (local caps; provider-side limits are an owner action at the provider).
+
+**Status (2026-11-09):** engineering built and tested against scripted backends (D-025). **Open, owner actions:** choose the hosted provider and record its terms (F-02), supply a key outside the repository, set a spend cap, run `scripts/run_benchmark.py --backend ID`, set the validity threshold, then choose primary and fallback. The synthetic corpus has 26 in-scope cases (n < 30), so results are labelled exploratory until it is enlarged or repeated.
 
 ## Phase 4 — Knowledge base and citation verification
 

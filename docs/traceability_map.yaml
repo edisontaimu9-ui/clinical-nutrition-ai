@@ -253,3 +253,82 @@ NFR-REL-01:
     - tests/integration/test_backup_restore_drill.py::test_a_backup_is_encrypted_restored_and_matches_the_source
     - tests/integration/test_backup_restore_drill.py::test_a_drill_that_loses_data_is_reported_as_failed
   note: the drill works and fails loudly when data is lost. The targets in docs/ops/recovery_targets.yaml are proposals the owner has not confirmed, and the drill has only run on small synthetic data.
+
+# ---------------------------------------------------------------- Phase 3
+FR-AUD-02:
+  status: partial
+  tests:
+    - tests/safety/test_llm_gateway.py::test_mock_summary_is_ok_and_audited_with_hashes_only
+    - tests/integration/test_db_model_audit.py::test_model_events_are_audited_and_chain_verifies
+  note: model id, version, prompt version, input and output hashes are logged to the hash-chained audit. Model digest applies to local runtimes only (deferred). KB snapshot is logged from Phase 4.
+FR-ADM-02:
+  status: partial
+  tests:
+    - tests/safety/test_llm_gateway.py::test_shipped_registry_hosted_templates_are_disabled_and_refused
+    - tests/safety/test_llm_gateway.py::test_mock_summary_is_ok_and_audited_with_hashes_only
+  note: model/provider versions and prompt versions (with template hash) are in a versioned registry and recorded per run. Rule-set and KB versions are attached to outputs from Phase 5.
+NFR-SEC-08:
+  status: partial
+  tests:
+    - tests/safety/test_llm_evaluation.py::test_injected_instruction_never_reaches_an_accepted_output
+    - tests/safety/test_llm_gateway.py::test_verifier_blocks_each_bad_behaviour
+    - tests/safety/test_llm_gateway.py::test_delimiter_in_data_is_refused
+  note: injection, fabrication and insecure-output (markup, links) mitigations are tested against scripted backends. Resistance of real models is not yet measured.
+NFR-SEC-09:
+  status: automated
+  tests:
+    - tests/safety/test_llm_gateway.py::test_gate_refuses_before_any_call
+    - tests/safety/test_llm_gateway.py::test_real_case_and_unknown_case_refused
+    - tests/safety/test_llm_gateway.py::test_gate_reads_instance_every_request
+    - tests/safety/test_llm_gateway.py::test_real_data_profile_cannot_build_hosted
+    - tests/safety/test_egress_static.py::test_real_data_profile_has_no_hosted_adapter
+  note: the instance data class is read per request; the case's synthetic flag is looked up, never supplied by the caller.
+NFR-SEC-10:
+  status: partial
+  tests:
+    - tests/safety/test_llm_gateway.py::test_secret_never_prints_or_pickles
+    - tests/safety/test_llm_gateway.py::test_key_file_must_be_private_and_outside_repo
+    - tests/safety/test_llm_gateway.py::test_daily_cap_and_rate_cap_enforced_before_call
+    - tests/safety/test_llm_gateway.py::test_output_token_cap_enforced
+  note: local caps are enforced before every call. Provider-side scoped keys and hard spend limits, and key rotation after exposure, are owner actions at the provider.
+NFR-SAF-05:
+  status: partial
+  tests:
+    - tests/safety/test_llm_evaluation.py::test_same_inputs_give_same_hashes_for_a_deterministic_backend
+  note: every run is attributable by hashes, model version and prompt hash. Re-generation for hosted models depends on provider seed support and is measured in the real benchmark (open).
+NFR-PERF-02:
+  status: partial
+  tests:
+    - tests/safety/test_llm_gateway.py::test_provider_errors_are_fail_safe
+  note: per-call timeouts and fail-safe behaviour exist; end-to-end ADIME timing and progress display come with Phase 5.
+NFR-PERF-03:
+  status: documentary
+  note: local inference is designed (the Backend interface and `mode local`) but deliberately not built until the hardware decision (Q-05).
+NFR-ARC-01:
+  status: automated
+  tests:
+    - tests/safety/test_llm_gateway.py::test_hosted_happy_path_is_by_configuration_only
+NFR-ARC-02:
+  status: automated
+  tests:
+    - tests/safety/test_egress_static.py::test_no_provider_sdk_imports_anywhere
+    - tests/safety/test_egress_static.py::test_network_libraries_only_in_transport
+NFR-ARC-03:
+  status: partial
+  tests:
+    - tests/safety/test_llm_gateway.py::test_gate_refuses_before_any_call
+  note: unpinned versions are refused and the version is recorded per run. The automatic regression trigger on a version change is a CI step still to be added when a hosted backend is chosen.
+NFR-ARC-04:
+  status: automated
+  tests:
+    - tests/safety/test_llm_gateway.py::test_failures_are_fail_safe
+    - tests/safety/test_llm_gateway.py::test_repair_retry_succeeds_once_then_gives_up
+NFR-ARC-05:
+  status: automated
+  tests:
+    - tests/safety/test_llm_evaluation.py::test_harness_runs_unchanged_against_every_backend_and_reports_each
+    - tests/safety/test_llm_evaluation.py::test_harness_flags_each_failure_mode
+NFR-ARC-06:
+  status: automated
+  tests:
+    - tests/safety/test_egress_static.py::test_mock_path_opens_no_sockets

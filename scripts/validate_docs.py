@@ -13,6 +13,7 @@ required = [
     "docs/decisions/decision-log.md", "docs/ROADMAP.md", "docs/EVALUATION.md",
     "docs/data/schema-design.sql", ".gitignore", "docs/TRACEABILITY.md", "docs/THREAT_MODEL.md", "docs/ops/recovery_targets.yaml", "docs/clinical/rule-review-sheet.md",
     "docs/clinical/rule-signoff.md", ".github/workflows/ci.yml", "requirements-dev.txt",
+    "packages/llm/config/backends.yaml", "build/profiles/real-data.yaml", "docs/evaluation/benchmark-mock-harness-validation.md",
 ]
 for r in required:
     p = root / r

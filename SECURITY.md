@@ -204,7 +204,7 @@ Create and maintain a register mapping each applicable legal and regulatory requ
 | 0 | This document; threat model v0; data classification |
 | 1 | Identity/clinical separation; RLS design tests; synthetic data only; secret and identifier scanning in CI; instance data class and governance tables |
 | 2 | AuthN/MFA, RBAC, RLS enforced, encryption, KMS integration, audit chain and verifier, backup/restore test |
-| 3 | Provider-neutral LLM gateway; hosted adapter with synthetic-only gates (§7.3) and tests; mock backend; model/provider version registry; key-handling checks; local runtime deferred until the hosting decision |
+| 3 | **Built (D-025); real provider not yet selected.** Provider-neutral LLM gateway; hosted adapter with synthetic-only gates (§7.3) and tests; mock backend; model/provider version registry; key-handling checks; local runtime deferred until the hosting decision |
 | 4 | KB integrity and licence register |
 | 5 | Prompt-injection and leakage test suites passing |
 | 6 | UI security review (CSP, session handling), pen test of API |

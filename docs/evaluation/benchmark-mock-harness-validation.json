@@ -1,0 +1,416 @@
+[
+  {
+    "backend_id": "mock-faithful",
+    "cases": 26,
+    "conflict_and_blocking_gap_surfacing": {
+      "ci95": [
+        0.7719,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 13,
+      "n": 13,
+      "rate": 1.0
+    },
+    "fabrication_violations": 0,
+    "failure_reasons": {},
+    "injection_resistance": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    },
+    "latency_s": {
+      "mean": 0.0,
+      "p95": 0.0
+    },
+    "missing_vs_normal_violations": 0,
+    "output_stability_cases": null,
+    "repeats": 1,
+    "runs": 26,
+    "structured_validity": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    },
+    "tokens": {
+      "input": 78758,
+      "output": 48428
+    },
+    "verified_ok": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    }
+  },
+  {
+    "backend_id": "mock-drop_conflicts",
+    "cases": 26,
+    "conflict_and_blocking_gap_surfacing": {
+      "ci95": [
+        0.5776,
+        0.9567
+      ],
+      "exploratory": true,
+      "k": 11,
+      "n": 13,
+      "rate": 0.8461538461538461
+    },
+    "fabrication_violations": 0,
+    "failure_reasons": {},
+    "injection_resistance": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    },
+    "latency_s": {
+      "mean": 0.0,
+      "p95": 0.0
+    },
+    "missing_vs_normal_violations": 0,
+    "output_stability_cases": null,
+    "repeats": 1,
+    "runs": 26,
+    "structured_validity": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    },
+    "tokens": {
+      "input": 78758,
+      "output": 48248
+    },
+    "verified_ok": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    }
+  },
+  {
+    "backend_id": "mock-fabricate_number",
+    "cases": 26,
+    "conflict_and_blocking_gap_surfacing": {
+      "ci95": [
+        0.0,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 0,
+      "n": 0,
+      "rate": null
+    },
+    "fabrication_violations": 26,
+    "failure_reasons": {
+      "verification_failed": 26
+    },
+    "injection_resistance": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    },
+    "latency_s": {
+      "mean": 0.0,
+      "p95": 0.0
+    },
+    "missing_vs_normal_violations": 0,
+    "output_stability_cases": null,
+    "repeats": 1,
+    "runs": 26,
+    "structured_validity": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    },
+    "tokens": {
+      "input": 78758,
+      "output": 48662
+    },
+    "verified_ok": {
+      "ci95": [
+        0.0,
+        0.1287
+      ],
+      "exploratory": true,
+      "k": 0,
+      "n": 26,
+      "rate": 0.0
+    }
+  },
+  {
+    "backend_id": "mock-normal_for_missing",
+    "cases": 26,
+    "conflict_and_blocking_gap_surfacing": {
+      "ci95": [
+        0.0,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 0,
+      "n": 0,
+      "rate": null
+    },
+    "fabrication_violations": 3,
+    "failure_reasons": {
+      "verification_failed": 26
+    },
+    "injection_resistance": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    },
+    "latency_s": {
+      "mean": 0.0,
+      "p95": 0.0
+    },
+    "missing_vs_normal_violations": 26,
+    "output_stability_cases": null,
+    "repeats": 1,
+    "runs": 26,
+    "structured_validity": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    },
+    "tokens": {
+      "input": 78758,
+      "output": 49419
+    },
+    "verified_ok": {
+      "ci95": [
+        0.0,
+        0.1287
+      ],
+      "exploratory": true,
+      "k": 0,
+      "n": 26,
+      "rate": 0.0
+    }
+  },
+  {
+    "backend_id": "mock-follow_injection",
+    "cases": 26,
+    "conflict_and_blocking_gap_surfacing": {
+      "ci95": [
+        0.0,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 0,
+      "n": 0,
+      "rate": null
+    },
+    "fabrication_violations": 26,
+    "failure_reasons": {
+      "verification_failed": 26
+    },
+    "injection_resistance": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    },
+    "latency_s": {
+      "mean": 0.0,
+      "p95": 0.0
+    },
+    "missing_vs_normal_violations": 26,
+    "output_stability_cases": null,
+    "repeats": 1,
+    "runs": 26,
+    "structured_validity": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    },
+    "tokens": {
+      "input": 78758,
+      "output": 49020
+    },
+    "verified_ok": {
+      "ci95": [
+        0.0,
+        0.1287
+      ],
+      "exploratory": true,
+      "k": 0,
+      "n": 26,
+      "rate": 0.0
+    }
+  },
+  {
+    "backend_id": "mock-invalid_json",
+    "cases": 26,
+    "conflict_and_blocking_gap_surfacing": {
+      "ci95": [
+        0.0,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 0,
+      "n": 0,
+      "rate": null
+    },
+    "fabrication_violations": 0,
+    "failure_reasons": {
+      "invalid_json": 26
+    },
+    "injection_resistance": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    },
+    "latency_s": {
+      "mean": 0.0,
+      "p95": 0.0
+    },
+    "missing_vs_normal_violations": 0,
+    "output_stability_cases": null,
+    "repeats": 1,
+    "runs": 26,
+    "structured_validity": {
+      "ci95": [
+        0.0,
+        0.1287
+      ],
+      "exploratory": true,
+      "k": 0,
+      "n": 26,
+      "rate": 0.0
+    },
+    "tokens": {
+      "input": 158594,
+      "output": 364
+    },
+    "verified_ok": {
+      "ci95": [
+        0.0,
+        0.1287
+      ],
+      "exploratory": true,
+      "k": 0,
+      "n": 26,
+      "rate": 0.0
+    }
+  },
+  {
+    "backend_id": "mock-flaky_json",
+    "cases": 26,
+    "conflict_and_blocking_gap_surfacing": {
+      "ci95": [
+        0.7719,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 13,
+      "n": 13,
+      "rate": 1.0
+    },
+    "fabrication_violations": 0,
+    "failure_reasons": {},
+    "injection_resistance": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    },
+    "latency_s": {
+      "mean": 0.0,
+      "p95": 0.0
+    },
+    "missing_vs_normal_violations": 0,
+    "output_stability_cases": null,
+    "repeats": 1,
+    "runs": 26,
+    "structured_validity": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    },
+    "tokens": {
+      "input": 81043,
+      "output": 48431
+    },
+    "verified_ok": {
+      "ci95": [
+        0.8713,
+        1.0
+      ],
+      "exploratory": true,
+      "k": 26,
+      "n": 26,
+      "rate": 1.0
+    }
+  }
+]

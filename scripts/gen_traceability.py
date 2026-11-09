@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "TRACEABILITY.md"
 MAP = ROOT / "docs" / "traceability_map.yaml"
 PHASE2 = "FR-AUD-01 FR-AUD-03 FR-ADM-01 FR-GOV-03 NFR-SEC-01 NFR-SEC-02 NFR-SEC-03 NFR-SEC-04 NFR-SEC-05 NFR-REL-01".split()
+PHASE3 = "FR-AUD-02 FR-ADM-02 NFR-SEC-08 NFR-SEC-09 NFR-SEC-10 NFR-SAF-05 NFR-PERF-02 NFR-PERF-03 NFR-ARC-01 NFR-ARC-02 NFR-ARC-03 NFR-ARC-04 NFR-ARC-05 NFR-ARC-06".split()
 PHASE1 = ("FR-INT-01 FR-INT-02 FR-INT-04 FR-INT-05 FR-STATE-01 FR-STATE-02 FR-COMP-01 FR-COMP-02 FR-COMP-03 "
           "FR-CALC-01 FR-CALC-02 FR-CALC-03 FR-CALC-04 FR-CONF-01 FR-CONF-02 FR-POP-01 FR-POP-02 FR-POP-03 FR-POP-04 "
           "FR-GOV-01 FR-GOV-02 NFR-SEC-06 NFR-SEC-07 NFR-MNT-01 NFR-MNT-02 NFR-MNT-03 NFR-INT-01 NFR-OBS-01 NFR-PERF-01").split()
@@ -39,7 +40,7 @@ def test_exists(spec: str) -> bool:
 
 def problems(reqs, evidence):
     errs = []
-    for r in PHASE1 + PHASE2:
+    for r in PHASE1 + PHASE2 + PHASE3:
         if r not in reqs:
             errs.append(f"{r} is not defined in REQUIREMENTS.md")
         if r not in evidence:
@@ -86,6 +87,8 @@ def build(reqs, evidence) -> str:
     L += table(reqs, evidence, PHASE1)
     L += ["", "## Phase 2: security and audit baseline", "", summary(evidence, PHASE2), ""]
     L += table(reqs, evidence, PHASE2)
+    L += ["", "## Phase 3: LLM gateway and evaluation harness", "", summary(evidence, PHASE3), ""]
+    L += table(reqs, evidence, PHASE3)
     return "\n".join(L) + "\n"
 
 
