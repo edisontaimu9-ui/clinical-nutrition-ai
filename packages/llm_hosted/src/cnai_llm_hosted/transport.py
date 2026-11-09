@@ -34,7 +34,11 @@ class HttpsTransport:
                 raw = r.read(MAX_RESPONSE_BYTES + 1)
         except urllib.error.HTTPError as e:
             if e.code == 429:
-                raise RateLimited("provider rate limit") from None
+                try:
+                    wait = float(e.headers.get("retry-after", 0)) if e.headers else 0.0
+                except (TypeError, ValueError):
+                    wait = 0.0
+                raise RateLimited("provider rate limit (HTTP 429)", min(max(wait, 0.0), 3600.0)) from None
             if e.code >= 500 or e.code in (301, 302, 303, 307, 308):
                 raise BackendUnavailable(f"provider status {e.code}") from None
             raise BackendProtocolError(f"provider status {e.code}") from None

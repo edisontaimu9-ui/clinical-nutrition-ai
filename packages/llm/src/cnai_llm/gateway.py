@@ -41,11 +41,14 @@ def _canon(obj) -> str:
 class Gateway:
     def __init__(self, registry: Registry, *, gate: Optional[HostedGate] = None, sink: Optional[AuditSink] = None,
                  profile: str = "synthetic-dev", environ: Mapping[str, str] = os.environ, transport: Optional[object] = None,
-                 clock: Callable[[], float] = None, canaries: tuple = ("CANARY-7731",)):
+                 clock: Callable[[], float] = None, canaries: tuple = ("CANARY-7731",),
+                 sleep: Callable[[float], None] = None, progress: Optional[Callable[[str], None]] = None):
         import time
         self.registry, self.gate, self.sink = registry, gate, sink or MemoryAuditSink()
         self.profile, self.environ, self.transport = profile, environ, transport
         self.clock, self.canaries = clock or time.time, canaries
+        self.sleep, self.progress = sleep or time.sleep, progress
+        self._cooldown: Dict[str, float] = {}               # backend id -> time before which no request is sent (after a final HTTP 429)
         self._backends: Dict[str, Backend] = {}
         self._trackers: Dict[str, SpendTracker] = {}
 
@@ -68,6 +71,45 @@ class Gateway:
             self.sink.record(action, run_id, outcome, details)
         except Exception as e:       # report only the exception TYPE: the cause may contain content
             raise GatewayError(f"audit write failed ({type(e).__name__})") from None
+
+    def _reserve(self, tracker, est_in, max_out, cfg):
+        """Reserve budget. Per-minute limits may be waited out (controlled pacing) when the backend config allows it;
+        daily limits never are."""
+        retry = cfg.get("retry", {})
+        waits = 0
+        while True:
+            try:
+                tracker.reserve(est_in, max_out)
+                return
+            except BudgetExceeded as e:
+                if not (retry.get("pace_on_rate_limit") and e.retry_after_s > 0 and waits < 8
+                        and e.retry_after_s <= float(retry.get("max_wait_s", 90))):
+                    raise
+                waits += 1
+                if self.progress:
+                    self.progress(f"pacing: waiting {e.retry_after_s:.0f}s for the per-minute limit")
+                self.sleep(e.retry_after_s)
+
+    def _complete(self, backend, bid, system, text, params, tracker, cfg):
+        """Call the backend. HTTP 429 gets a small number of controlled retries (Retry-After honoured, exponential
+        backoff, capped); when they are exhausted the backend goes into cooldown and no further requests are sent."""
+        retry = cfg.get("retry", {})
+        max_retries = int(retry.get("max_429_retries", 2)) if cfg.get("mode") == "hosted" else 0
+        n = 0
+        while True:
+            try:
+                return backend.complete(system, text, params=params)
+            except RateLimited as e:
+                if n >= max_retries:
+                    self._cooldown[bid] = self.clock() + float(retry.get("cooldown_s", 300))
+                    raise
+                delay = min(max(e.retry_after, float(retry.get("backoff_s", 5)) * 2 ** n), float(retry.get("max_wait_s", 90)))
+                n += 1
+                if self.progress:
+                    self.progress(f"HTTP 429: retry {n}/{max_retries} after {delay:.0f}s")
+                self.sleep(delay)
+                if tracker:
+                    self._reserve(tracker, max(1, len(system + text) // 3), int(params.get("max_output_tokens", 1500)), cfg)
 
     # -- main entry --------------------------------------------------------------------------------------------
     def generate(self, req: GenerationRequest, backend_id: Optional[str] = None) -> GatewayResult:
@@ -95,7 +137,10 @@ class Gateway:
                 backend = self._backend(bid)
                 params = dict(cfg.get("params", {}))
                 tracker = self._tracker(bid, cfg)
-                tracker.reserve(max(1, len(system + user) // 3), int(params.get("max_output_tokens", 1500)))
+                if self._cooldown.get(bid, 0) > self.clock():
+                    return self._fail(res, "rate_limited_cooldown", refused=True, cfg=cfg)
+                est_in, max_out = max(1, len(system + user) // 3), int(params.get("max_output_tokens", 1500))
+                self._reserve(tracker, est_in, max_out, cfg)
             else:
                 backend = self._backend(bid)
                 params, tracker = dict(cfg.get("params", {})), None
@@ -104,7 +149,7 @@ class Gateway:
             text = user
             for attempt in (1, 2):
                 res.attempts = attempt
-                comp = backend.complete(system, text, params=params)
+                comp = self._complete(backend, bid, system, text, params, tracker, cfg)
                 res.input_tokens += comp.input_tokens
                 res.output_tokens += comp.output_tokens
                 res.latency_s += comp.latency_s

@@ -23,6 +23,10 @@ class BackendTimeout(GatewayError):
 class RateLimited(GatewayError):
     code = "rate_limited"
 
+    def __init__(self, detail: str = "", retry_after: float = 0.0):
+        super().__init__(detail)
+        self.retry_after = float(retry_after or 0)
+
 
 class BackendProtocolError(GatewayError):
     code = "backend_protocol_error"

@@ -48,9 +48,12 @@ def main():
     reg = Registry.load()
     gate = HostedGate(lambda: InstanceInfo("synthetic", "development"), case_source_from_cases(cases))
     if a.backend:
-        g = Gateway(reg, gate=gate, sink=MemoryAuditSink())
-        reports = [evaluation.evaluate(g, a.backend, items, repeats=a.repeats)]
+        log = lambda m: print(m, file=sys.stderr, flush=True)       # ids and status only; never prompt, output or keys
+        g = Gateway(reg, gate=gate, sink=MemoryAuditSink(), progress=log)
+        reports = [evaluation.evaluate(g, a.backend, items, repeats=a.repeats, progress=log)]
         label, note = f"hosted {a.backend}", "Synthetic corpus only. Provider terms, pinned version and spend caps must be recorded before this can run."
+        if reports[0]["aborted"]:
+            note += f" **INCOMPLETE: the run stopped at '{reports[0]['aborted']}'. No benchmark result exists; no gate is met.**"
     else:
         reports = []
         for b in ("faithful", "drop_conflicts", "fabricate_number", "normal_for_missing", "follow_injection", "invalid_json", "flaky_json"):
@@ -61,9 +64,13 @@ def main():
         note = ("Scripted backends, no network. This shows the harness and verifier catch each failure mode; "
                 "it is NOT a model result. The faithful mock is the reference ceiling.")
     slug = label.replace(" ", "-")
+    if a.backend and (reports[0]["aborted"] or not reports[0]["complete"]):
+        print(markdown(label, reports, note))                    # an incomplete run is never saved as a result
+        sys.exit(2)
     (OUT / f"benchmark-{slug}.json").write_text(json.dumps(reports, indent=2, sort_keys=True) + "\n")
     (OUT / f"benchmark-{slug}.md").write_text(markdown(label, reports, note))
     print((OUT / f"benchmark-{slug}.md").read_text())
+
 
 
 if __name__ == "__main__":

@@ -264,7 +264,7 @@ FR-AUD-02:
 FR-ADM-02:
   status: partial
   tests:
-    - tests/safety/test_llm_gateway.py::test_shipped_registry_hosted_templates_are_disabled_and_refused
+    - tests/safety/test_llm_gateway.py::test_shipped_registry_default_is_mock_and_unconfigured_hosted_entries_are_disabled
     - tests/safety/test_llm_gateway.py::test_mock_summary_is_ok_and_audited_with_hashes_only
   note: model/provider versions and prompt versions (with template hash) are in a versioned registry and recorded per run. Rule-set and KB versions are attached to outputs from Phase 5.
 NFR-SEC-08:
@@ -290,7 +290,11 @@ NFR-SEC-10:
     - tests/safety/test_llm_gateway.py::test_key_file_must_be_private_and_outside_repo
     - tests/safety/test_llm_gateway.py::test_daily_cap_and_rate_cap_enforced_before_call
     - tests/safety/test_llm_gateway.py::test_output_token_cap_enforced
-  note: local caps are enforced before every call. Provider-side scoped keys and hard spend limits, and key rotation after exposure, are owner actions at the provider.
+    - tests/safety/test_llm_groq.py::test_key_falls_back_from_env_to_a_private_file
+    - tests/safety/test_llm_groq.py::test_429_exhausted_stops_requests_and_opens_cooldown
+    - tests/safety/test_llm_groq.py::test_daily_token_cap_is_never_waited_out
+    - tests/safety/test_llm_groq.py::test_no_persistent_storage_endpoints_are_used
+  note: local caps (calls, tokens, cost) are enforced before every call and HTTP 429 handling is controlled. Provider-side limits, Zero Data Retention and key rotation after exposure are owner actions in the Groq console.
 NFR-SAF-05:
   status: partial
   tests:

@@ -1,6 +1,6 @@
 # Decision Log
 
-Version 0.5 · Phase 2 approved by the project owner on 2026-11-09 with two exit items still open (owner-agreed recovery targets; independent security review) · Phase 3 engineering built (D-025); provider selection and benchmark open · Phase 1 decisions D-020 to D-023 and Phase 2 decision D-024 added as Proposed · Phase 0 status: **approved by the project owner on 2026-11-08**. Changes since v0.2: all decisions D-001 to D-019 moved to Accepted; the suggested defaults for all open questions were accepted (see the questions table); Phase 1 started.
+Version 0.5 · Phase 2 approved by the project owner on 2026-11-09 with two exit items still open (owner-agreed recovery targets; independent security review) · Phase 3 approved by the project owner on 2026-11-09; provider chosen (D-026: Groq Free); real benchmark not yet run · Phase 1 decisions D-020 to D-023 and Phase 2 decision D-024 added as Proposed · Phase 0 status: **approved by the project owner on 2026-11-08**. Changes since v0.2: all decisions D-001 to D-019 moved to Accepted; the suggested defaults for all open questions were accepted (see the questions table); Phase 1 started.
 
 Architecture and clinical-design decisions for the Clinical Nutrition AI Agent. Format: lightweight ADR. Never delete entries; supersede them.
 
@@ -36,7 +36,8 @@ Status values: Proposed · Accepted · Superseded · Rejected.
 | D-022 | Clinical sign-off is a recorded human act; software never marks content reviewed | Proposed |
 | D-023 | Setting priorities for Malawi: low-cost measures first; special circumstances recorded, pregnancy deferred | Proposed |
 | D-024 | Phase 2 security design: database roles, row-level security with owner exemption, break-glass, anchored audit chain, key provider interface | Proposed |
-| D-025 | Phase 3 LLM gateway design: provider-neutral interface, separate hosted adapter package, per-request gates, verified output, hashed audit | Proposed |
+| D-025 | Phase 3 LLM gateway design: provider-neutral interface, separate hosted adapter package, per-request gates, verified output, hashed audit | Accepted (Phase 3 approved 2026-11-09) |
+| D-026 | First hosted provider: GroqCloud Free plan, synthetic data only (closes F-02 terms; benchmark still open) | Accepted (owner decision 2026-11-09); terms to be re-verified |
 
 ---
 
@@ -179,11 +180,23 @@ Status values: Proposed · Accepted · Superseded · Rejected.
 ---
 
 ## D-025 · Phase 3 LLM gateway design
-- **Status:** Proposed (engineering). Provider choice and thresholds are owner decisions, still open.
+- **Status:** Accepted: Phase 3 approved by the project owner on 2026-11-09. Provider choice is D-026; thresholds are still open.
 - **Context:** Phase 3 needs one provider-neutral way to call models that can run with no network (mock), can use a hosted model on synthetic data only, and cannot be switched to a hosted model by accident on real data.
 - **Decision:** (1) One `Gateway.generate` entry point with a `Backend` protocol; no provider SDKs, only standard-library HTTP in one transport module. (2) Hosted adapters live in a separate package, `cnai_llm_hosted`, excluded by the real-data build profile and checked in CI. (3) Hosted calls pass gates on every request: build profile, instance data class and mode read live, case synthetic flag looked up by the gate, backend enabled, provider terms recorded, pinned version, endpoint allow-list, key present, identifier scan of the data block, spend and rate caps. (4) Output is validated by project code against a schema with one repair retry, then a deterministic verifier; any failure returns "unable to draft". (5) Every run is audited with hashes and ids only (migration 0006). (6) Backends, versions and prompts sit in `packages/llm/config/backends.yaml`; hosted entries ship as disabled templates. (7) The benchmark task is a test vehicle (`assessment_summary_v0`), not the Phase 5 ADIME draft. Verifier wording rules are proposals for the clinical lead.
 - **Consequences:** The harness is validated with scripted backends. No real model has been measured: that needs the owner to choose a provider, record its terms, supply a key outside the repository and set a spend cap (F-02). Primary and fallback backends and the validity threshold remain open.
 - **Alternatives:** Provider SDKs (rejected: dependency and egress surface, NFR-ARC-02); one package with a runtime flag only (rejected: real-data builds must not contain the adapter).
+
+## D-026 · First hosted provider: GroqCloud Free plan (synthetic data only)
+- **Status:** Accepted: owner decision of 2026-11-09. The provider terms below are **as stated by the owner**; engineering has not independently verified them and they must be re-read on Groq's current terms and data-controls pages before the first call and whenever the plan or terms change.
+- **Context:** F-02 required the first hosted provider, a spend cap and recorded retention and training terms. The repository held no earlier provider-specific decision, so this is the first; the adapter is OpenAI-compatible only in wire format.
+- **Decision:** Backend id `groq`; provider Groq; base URL `https://api.groq.com/openai/v1`; initial model `openai/gpt-oss-120b`; Free plan only. Groq publishes no dated snapshots for this model, so the model id is the pin; any model replacement or deprecation notice must be recorded here and triggers a full benchmark re-run (NFR-ARC-03).
+- **Terms recorded (F-02), as stated by the owner:** (1) Groq does not use customer inputs or outputs for model training. (2) Inference data is not retained by default. (3) Reliability and abuse-monitoring logs may contain inputs and outputs and may be retained for up to 30 days. (4) Zero Data Retention is available through Data Controls (enable it in the Groq console before any use, and record the date here). (5) Synthetic patient data only. (6) No persistent-storage endpoints are used during development: only `/chat/completions` is called, and a test fails if code references files, batches, fine-tuning, uploads, vector stores or responses endpoints.
+- **Security:** `GROQ_API_KEY` comes from the environment or `~/.config/cnai/groq_key` (chmod 600, outside the repository); the key is never committed, logged, put in an audit record or typed inline in a command (SECURITY.md 7.3).
+- **Budget:** Free plan only; no paid upgrade or automatic billing (cost caps are zero). Free-tier rate limits are hard operational limits. Defaults sit below the per-model limits published for `openai/gpt-oss-120b` when checked on 2026-11-09 (30 requests/min, 1,000 requests/day, 8,000 tokens/min, 200,000 tokens/day): 10 requests/min, 400 requests/day, 6,500 tokens/min and 150,000 tokens/day, counted at worst case. The owner must confirm the organisation's own limits in the Groq console.
+- **HTTP 429 handling:** at most two retries, honouring `Retry-After` with exponential backoff (10 s, then 20 s, capped at 90 s); after that the backend enters a 10-minute cooldown, no request is sent, the output is "unable to draft", and the benchmark stops and is reported incomplete. Per-minute limits are waited out (pacing); daily limits never are.
+- **Benchmark gates preserved:** structured-output validity at or above 99% (and n of at least 30 to count), zero fabricated clinical information, zero missing-as-normal errors, 100% on the injection regression suite. These are the proposed gates in code; the clinical lead still has to set them formally.
+- **Consequences:** The expected first benchmark takes tens of minutes because of pacing and uses a large share of the daily token budget (one full run is 26 summary calls plus 26 injection calls). A result obtained on `openai/gpt-oss-120b` does not transfer to any other model. A reasoning model may spend output tokens on reasoning; `reasoning_effort: low` and `include_reasoning: false` are set and truncated outputs count as invalid.
+- **Open:** a real benchmark run on `groq` (not yet executed: see ROADMAP), choice of fallback backend, validity threshold, and confirming Zero Data Retention.
 
 ## Open questions for the project owner
 
@@ -209,7 +222,7 @@ Status as of v0.2. Answered questions are linked to the decision that records th
 | # | Follow-up | Owner | Needed by |
 |---|---|---|---|
 | F-01 | Confirm the facility types the KB and rules should target (Q-02 default: Malawi hospital inpatient and outpatient nutrition services) | Project owner | Before KB sourcing, Phase 4 |
-| F-02 | Choose the first hosted provider, set a hard spend cap, and record its retention and no-training terms here (Q-11) | Project owner | Phase 3 |
+| F-02 | ~~Choose the first hosted provider, set a hard spend cap, and record its retention and no-training terms~~ Done as D-026 (Groq Free, no billing). Still to do: confirm Zero Data Retention in the Groq console and re-verify the terms | Project owner | Before the first benchmark run |
 | F-03 | Name a candidate independent clinical safety reviewer (Q-12) | Project owner | Before Phase 1 exits, so the first rule set can be independently reviewed |
 | F-04 | Identify the research ethics committee and data-protection adviser (Q-10) | Project owner | Before Phase 6 |
 | F-05 | Decide between a local server (mode L) and an approved hosted framework (mode A) for real data (Q-05) | Project owner | Before Phase 7 |

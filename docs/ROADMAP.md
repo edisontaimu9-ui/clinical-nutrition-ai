@@ -63,7 +63,7 @@ Planning assumptions (v0.2):
 - [ ] Structured-output validity at or above the threshold set by the product and clinical requirements lead.
 - [x] Spend caps and key-handling checks in place (local caps; provider-side limits are an owner action at the provider).
 
-**Status (2026-11-09):** engineering built and tested against scripted backends (D-025). **Open, owner actions:** choose the hosted provider and record its terms (F-02), supply a key outside the repository, set a spend cap, run `scripts/run_benchmark.py --backend ID`, set the validity threshold, then choose primary and fallback. The synthetic corpus has 26 in-scope cases (n < 30), so results are labelled exploratory until it is enlarged or repeated.
+**Status (2026-11-09):** approved by the owner on 2026-11-09. Engineering is built and tested against scripted and fake-transport backends (D-025). Provider chosen: GroqCloud Free, `openai/gpt-oss-120b`, backend id `groq` (D-026). **Not yet done:** the real benchmark. It was attempted from the build workspace with `python scripts/run_benchmark.py --backend groq` and correctly refused with `key_unavailable` (no key, no route to the provider there), so **no benchmark evidence exists, and exit criteria 3 and 4 remain open.** To close them: create the key file in Termux, enable Zero Data Retention in the Groq console, run the benchmark on your phone, and share `docs/evaluation/benchmark-hosted-groq.md`. The synthetic corpus has 26 in-scope cases (n < 30), so validity cannot be called as met until the corpus is enlarged or the run is repeated.
 
 ## Phase 4 — Knowledge base and citation verification
 

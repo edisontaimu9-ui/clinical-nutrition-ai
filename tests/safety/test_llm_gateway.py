@@ -205,13 +205,12 @@ def test_registry_rejects_hosted_adapter_outside_hosted_package():
         Registry({"backends": {"x": {"mode": "mock", "adapter": "os:system"}}})
 
 
-def test_shipped_registry_hosted_templates_are_disabled_and_refused():
+def test_shipped_registry_default_is_mock_and_unconfigured_hosted_entries_are_disabled():
     reg = Registry.load()
-    for bid, cfg in reg.backends.items():
-        if cfg["mode"] == "hosted":
-            assert cfg["enabled"] is False and cfg["provider_terms_ref"] is None
-            assert cfg["model_version"] in ("TO_BE_PINNED",)
     assert reg.config(reg.active_id({}))["mode"] == "mock"
+    for bid, cfg in reg.backends.items():
+        if cfg["mode"] == "hosted" and bid != "groq":
+            assert cfg["enabled"] is False and cfg["provider_terms_ref"] is None and cfg["model_version"] == "TO_BE_PINNED"
 
 
 # ---------------- keys ----------------

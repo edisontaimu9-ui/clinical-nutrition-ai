@@ -48,9 +48,11 @@ def load_secret(spec: Optional[Mapping], environ: Mapping = os.environ, repo_roo
         raise KeyError_("no key source is configured")
     if "env" in spec:
         v = environ.get(spec["env"], "")
-        if not v.strip():
+        if v.strip():
+            return Secret(v.strip(), f"env:{spec['env']}")
+        if "file" not in spec:
             raise KeyError_(f"environment variable {spec['env']} is not set")
-        return Secret(v.strip(), f"env:{spec['env']}")
+        # not set: fall through to the key file, if one is configured
     if "file" in spec:
         p = Path(os.path.expanduser(spec["file"]))
         if _inside(p, repo_root):

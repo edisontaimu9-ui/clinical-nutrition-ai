@@ -1,7 +1,7 @@
 # Model and provider version registry (FR-ADM-02, NFR-ARC-03). Changing the active backend is a change to this file or to the
 # CNAI_LLM_BACKEND environment variable, followed by an evaluation run. Nothing else in the system changes.
 #
-# HOSTED ENTRIES ARE TEMPLATES. They stay `enabled: false` until the project owner has (1) chosen a provider, (2) recorded the
+# The Anthropic entry below is a TEMPLATE, as hosted entries were before the owner chose a provider. They stay `enabled: false` until the project owner has (1) chosen a provider, (2) recorded the
 # provider's terms (retention, training use, processing location, sub-processors, deletion) in the decision log and put its
 # id in `provider_terms_ref`, (3) pinned an exact model version, and (4) set a spend cap. The gate refuses otherwise.
 registry_version: "0.1.0"
@@ -18,20 +18,26 @@ backends:
     status: approved_for_testing
     params: {behaviour: faithful}
 
-  hosted-openai-compatible-template:
+  # Provider chosen by the project owner on 2026-11-09 (decision D-026): GroqCloud, Free plan, synthetic data only.
+  # Free-tier limits are HARD operational limits (no paid upgrade, no billing). The numbers below are the published
+  # per-model limits for openai/gpt-oss-120b seen on 2026-11-09 (30 RPM, 1000 RPD, 8000 TPM, 200000 TPD); the owner must
+  # confirm the organisation's own limits in the Groq console. We stay well below them.
+  groq:
     mode: hosted
-    provider: TO_BE_CHOSEN
-    model_id: TO_BE_CHOSEN
-    model_version: TO_BE_PINNED          # exact snapshot or version; "latest" is refused
+    provider: groq
+    model_id: openai/gpt-oss-120b
+    model_version: openai/gpt-oss-120b   # Groq exposes no dated snapshot; the model id is the pin. Record any provider change notice in the decision log.
     adapter: "cnai_llm_hosted.openai_compat:OpenAICompatBackend"
-    endpoint: "https://api.example.invalid/v1"
-    endpoint_allowlist: ["api.example.invalid"]
-    api_key: {env: CNAI_LLM_API_KEY}     # or {file: ~/.config/cnai/llm_key} (chmod 600, outside the repository)
-    enabled: false
+    endpoint: "https://api.groq.com/openai/v1"
+    endpoint_allowlist: ["api.groq.com"]
+    api_key: {env: GROQ_API_KEY, file: "~/.config/cnai/groq_key"}   # file must be chmod 600 and outside the repository
+    enabled: true
     status: candidate
-    provider_terms_ref: null             # decision-log id once terms are recorded
-    params: {temperature: 0, max_output_tokens: 1500, seed: 7, timeout_s: 60, json_mode: false}
-    budget: {max_cost_per_day: 2.0, max_calls_per_minute: 10, max_output_tokens: 2000, price_in_per_1k: 0.0, price_out_per_1k: 0.0}
+    provider_terms_ref: D-026
+    params: {temperature: 0, max_output_tokens: 2000, timeout_s: 90, json_mode: true, reasoning_effort: low, include_reasoning: false}
+    retry: {max_429_retries: 2, backoff_s: 10, max_wait_s: 90, cooldown_s: 600, pace_on_rate_limit: true}
+    budget: {max_cost_per_day: 0.0, max_calls_per_minute: 10, max_output_tokens: 2000, price_in_per_1k: 0.0, price_out_per_1k: 0.0,
+             max_tokens_per_minute: 6500, max_calls_per_day: 400, max_tokens_per_day: 150000}
 
   hosted-anthropic-messages-template:
     mode: hosted

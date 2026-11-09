@@ -115,7 +115,7 @@ Only one phase is worked at a time. Each phase ends with validation and an expli
 
 ## Getting started
 
-Phases 1 (adult data model and deterministic core), 2 (security and audit baseline) and 3 (LLM gateway and evaluation harness; no real provider selected yet) are built. Phase 2 has two exit items open (see `docs/ROADMAP.md`). It uses synthetic data only.
+Phases 1 (adult data model and deterministic core), 2 (security and audit baseline) and 3 (LLM gateway and evaluation harness; Groq Free chosen as the hosted provider, no real benchmark run yet) are built. Phase 2 has two exit items open (see `docs/ROADMAP.md`). It uses synthetic data only.
 
 ```
 pip install -r requirements-dev.txt

@@ -14,6 +14,9 @@ class OpenAICompatBackend(HostedBase):
             body["seed"] = p["seed"]
         if p.get("json_mode"):
             body["response_format"] = {"type": "json_object"}
+        for k in ("reasoning_effort", "include_reasoning"):      # optional, provider-documented (e.g. Groq gpt-oss)
+            if k in p:
+                body[k] = p[k]
         return body
 
     def _extract(self, d):
