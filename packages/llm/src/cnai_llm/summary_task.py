@@ -73,8 +73,14 @@ _NUM = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w])")
 _MARKUP = re.compile(r"<[^>]{0,200}>|https?://|www\.|\]\(|!\[|`{3}|javascript:|data:text|\bon\w+\s*=", re.I)
 _NORMAL_CLAIM = re.compile(r"\b(normal|unremarkable|adequate|no concerns?|healthy|within (?:the )?(?:reference|normal) range|"
                            r"no abnormalit\w+|satisfactory)\b", re.I)
-_DIRECTIVE = re.compile(r"\b(diagnos\w*|prescrib\w*|start(?:ing)? (?:the patient )?on|initiate|commence|should be given|"
-                        r"recommend(?:ed|s|ation)?|treat with|administer)\b", re.I)
+_DECLARED = re.compile(r"declared (?:as )?normal by (?:the )?clinician", re.I)
+_INTERPRET = re.compile(r"\b(normal|unremarkable|adequate|healthy|reference ranges?|typical|expected range|within (?:the )?(?:\w+ )?range|"
+                        r"no abnormalit\w+|satisfactory|acceptable|reassuring|good|poor)\b", re.I)
+_UP = re.compile(r"\b(higher|increas\w*|gain\w*|above|more than)\b", re.I)
+_DOWN = re.compile(r"\b(lower|decreas\w*|loss|lost|below|reduc\w*|less than)\b", re.I)
+_DIRECTIVE = re.compile(r"\b(?:diagnos(?:e|ed|es|ing)|prescrib\w*|start(?:ing)? (?:the patient )?on|initiate|commence|should be given|"
+                        r"recommend(?:ed|s|ation)?|treat with|administer)\b|"
+                        r"\bdiagnosis\s*(?:(?:of|is|was|shows|confirms)\b|:)(?!\s*(?:not|missing|unknown|absent)\b)", re.I)
 
 
 def _dec(s):
@@ -94,6 +100,7 @@ def verify(output: Dict[str, Any], inputs: Dict[str, Any], canaries: tuple = ())
     usable_obs = {e["observation_id"]: e for e in inputs["present_elements"]}
     usable_obs.update({e["observation_id"]: e for e in inputs["declared_normal_elements"] if e.get("observation_id")})
     calcs = {c["calculation_id"]: c for c in inputs["calculations"]}
+    calc_input_ids = {i for c in inputs["calculations"] for i in c["input_observation_ids"]}   # e.g. the earlier weight in a change calculation
     finds = {f["finding_id"]: f for f in inputs["findings"]}
     unusable_labels = {e["label"].lower(): e["element_code"] for e in inputs["not_assessed_elements"] + inputs["other_state_elements"]}
     usable_codes = {e["element_code"] for e in inputs["present_elements"] + inputs["declared_normal_elements"]}
@@ -102,10 +109,11 @@ def verify(output: Dict[str, Any], inputs: Dict[str, Any], canaries: tuple = ())
     labels = sorted({e["label"] for k in ("present_elements", "declared_normal_elements", "not_assessed_elements", "other_state_elements")
                      for e in inputs[k]}, key=len, reverse=True)
 
-    quoted = sorted(labels + [f["message"] for f in inputs["findings"]], key=len, reverse=True)
+    values = [str(e["value"]) for e in inputs["present_elements"] if isinstance(e.get("value"), str) and not _is_num(e["value"])]
+    quoted = sorted(labels + [f["message"] for f in inputs["findings"]] + values, key=len, reverse=True)   # verbatim quotes of the data
 
     def scrub(text):
-        """Remove verbatim element labels and deterministic finding messages (project-authored text that may legitimately contain
+        """Remove verbatim element labels, finding messages and quoted free-text values (project- or clinician-authored text that may legitimately contain
         words such as 'diagnosis' or 'normal'); only model-authored wording is checked for directive or normal claims."""
         for q in quoted:
             text = re.sub(re.escape(q), " ", text, flags=re.I)
@@ -119,17 +127,18 @@ def verify(output: Dict[str, Any], inputs: Dict[str, Any], canaries: tuple = ())
         obs, cal, fnd = st.get("observation_ids", []), st.get("calculation_ids", []), st.get("finding_ids", [])
         codes = st.get("element_codes", [])
         if len(text) > MAX_TEXT:
-            bad("text_too_long", sid)
+            bad("text_too_long", sid, str(len(text)))
         if _MARKUP.search(text) or _CTRL.search(text):
             bad("unsafe_markup", sid)
         scan_text = scrub(text)
-        if _DIRECTIVE.search(scan_text):
-            bad("directive_language", sid)
+        m = _DIRECTIVE.search(scan_text)
+        if m:
+            bad("directive_language", sid, m.group(0).lower())
         for c in canaries:
             if c.lower() in text.lower():
                 bad("injection_echo", sid)
         for o in obs:
-            if o not in usable_obs:
+            if o not in usable_obs and o not in calc_input_ids:
                 bad("unknown_or_unusable_observation_id", sid, o)
         for c in cal:
             if c not in calcs:
@@ -156,8 +165,21 @@ def verify(output: Dict[str, Any], inputs: Dict[str, Any], canaries: tuple = ())
                 if label in low or code in low:
                     bad("finding_for_unassessed_element", sid, code)
         else:
-            if _NORMAL_CLAIM.search(scrub(text)):
-                bad("normal_claim_in_prompt", sid)
+            m = _NORMAL_CLAIM.search(_DECLARED.sub(" ", scrub(text)))
+            if m:
+                bad("normal_claim_in_prompt", sid, m.group(0).lower())
+        # Interpretation (normal / within a reference range) needs a source in the data. An observation has none; a calculation has
+        # one only when it carries a category (e.g. the WHO BMI category). Labs and findings are never called normal by the model.
+        if kind == "observation" or (kind == "calculation" and not any((calcs.get(c) or {}).get("category") for c in cal)):
+            m = _INTERPRET.search(_DECLARED.sub(" ", scrub(text)))
+            if m:
+                bad("unsupported_interpretation", sid, m.group(0).lower())
+        for c in cal:
+            ce = calcs.get(c)
+            if ce and c.startswith("calc:pct_weight_change") and _dec(ce["value"]) is not None:
+                val = _dec(ce["value"])
+                if (val < 0 and _UP.search(text)) or (val > 0 and _DOWN.search(text)):
+                    bad("direction_contradiction", sid, c)
         if kind == "conflict" and re.search(r"\b(resolved|the correct (?:value|weight)|actually|true value)\b", text, re.I):
             bad("conflict_resolved_by_model", sid)
         # Every number must be traceable to a cited fact.
@@ -179,8 +201,9 @@ def verify(output: Dict[str, Any], inputs: Dict[str, Any], canaries: tuple = ())
             fe = finds.get(f)
             if fe:
                 allowed += _numbers(fe["message"])
-        for n in _numbers(text):
-            if not any(n == a for a in allowed):
+        allowed_abs = {abs(a) for a in allowed if a is not None}
+        for n in _numbers(text):                                  # magnitude is checked; direction has its own check above
+            if abs(n) not in allowed_abs:
                 bad("unsupported_number", sid, str(n))
     return v
 

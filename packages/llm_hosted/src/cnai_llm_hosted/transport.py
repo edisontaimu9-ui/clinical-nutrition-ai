@@ -10,11 +10,25 @@ from urllib.parse import urlparse
 from cnai_llm.types import BackendProtocolError, BackendTimeout, BackendUnavailable, RateLimited
 
 MAX_RESPONSE_BYTES = 2_000_000
+# Providers behind bot filters commonly return HTTP 403 to the default 'Python-urllib' agent. A generic, non-identifying client name.
+USER_AGENT = "cnai-llm-gateway/0.1"
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, *a, **k):
         return None
+
+
+def _error_tag(e) -> str:
+    """Short machine tag from a provider error body, e.g. ': invalid_api_key'. Only [A-Za-z0-9_.-] up to 60 characters of
+    error.code or error.type is kept; the free-text message is never read out (it can quote request content)."""
+    try:
+        err = json.loads(e.read(4096)).get("error", {})
+        tag = str(err.get("code") or err.get("type") or "")
+    except Exception:
+        return ""
+    tag = "".join(c for c in tag if c.isalnum() or c in "_.-")[:60]
+    return f": {tag}" if tag else ""
 
 
 class HttpsTransport:
@@ -27,7 +41,7 @@ class HttpsTransport:
         u = urlparse(url)
         if u.scheme != "https" or u.hostname not in self.allowlist:
             raise BackendUnavailable("endpoint is not permitted")
-        req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={**headers, "Content-Type": "application/json"}, method="POST")
+        req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"User-Agent": USER_AGENT, "Accept": "application/json", **headers, "Content-Type": "application/json"}, method="POST")
         opener = urllib.request.build_opener(_NoRedirect)
         try:
             with opener.open(req, timeout=timeout) as r:
@@ -41,7 +55,7 @@ class HttpsTransport:
                 raise RateLimited("provider rate limit (HTTP 429)", min(max(wait, 0.0), 3600.0)) from None
             if e.code >= 500 or e.code in (301, 302, 303, 307, 308):
                 raise BackendUnavailable(f"provider status {e.code}") from None
-            raise BackendProtocolError(f"provider status {e.code}") from None
+            raise BackendProtocolError(f"provider status {e.code}{_error_tag(e)}") from None
         except (socket.timeout, TimeoutError):
             raise BackendTimeout("provider timed out") from None
         except (urllib.error.URLError, OSError):

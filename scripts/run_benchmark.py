@@ -42,16 +42,29 @@ def main():
     ap.add_argument("--mock", action="store_true")
     ap.add_argument("--backend")
     ap.add_argument("--repeats", type=int, default=1)
+    ap.add_argument("--limit", type=int, default=0, help="run only the first N cases (a short diagnostic run; never counts as a result)")
+    ap.add_argument("--diagnose", action="store_true", help="save raw model outputs and violations for the SYNTHETIC corpus to diagnostics/")
     a = ap.parse_args()
     cases, items = corpus.load_cases()
+    if a.limit:
+        items = items[:a.limit]
     OUT.mkdir(parents=True, exist_ok=True)
     reg = Registry.load()
     gate = HostedGate(lambda: InstanceInfo("synthetic", "development"), case_source_from_cases(cases))
     if a.backend:
         log = lambda m: print(m, file=sys.stderr, flush=True)       # ids and status only; never prompt, output or keys
-        g = Gateway(reg, gate=gate, sink=MemoryAuditSink(), progress=log)
+        g = Gateway(reg, gate=gate, sink=MemoryAuditSink(), progress=log, capture_raw=a.diagnose)
         reports = [evaluation.evaluate(g, a.backend, items, repeats=a.repeats, progress=log)]
         label, note = f"hosted {a.backend}", "Synthetic corpus only. Provider terms, pinned version and spend caps must be recorded before this can run."
+        diag = reports[0].pop("diagnostics", [])
+        if a.diagnose and diag:
+            dd = ROOT / "diagnostics"
+            dd.mkdir(exist_ok=True)
+            (dd / f"{a.backend}-diagnostics.json").write_text(json.dumps(diag, indent=1) + "\n")
+            log(f"diagnostics written to diagnostics/{a.backend}-diagnostics.json (synthetic data only; not committed)")
+        if a.limit:
+            note += f" PARTIAL: only the first {a.limit} cases were run; this is a diagnostic, not a result."
+            reports[0]["complete"] = False
         if reports[0]["aborted"]:
             note += f" **INCOMPLETE: the run stopped at '{reports[0]['aborted']}'. No benchmark result exists; no gate is met.**"
     else:
@@ -63,6 +76,8 @@ def main():
         label = "mock harness validation"
         note = ("Scripted backends, no network. This shows the harness and verifier catch each failure mode; "
                 "it is NOT a model result. The faithful mock is the reference ceiling.")
+    for r in reports:
+        r.pop("diagnostics", None)
     slug = label.replace(" ", "-")
     if a.backend and (reports[0]["aborted"] or not reports[0]["complete"]):
         print(markdown(label, reports, note))                    # an incomplete run is never saved as a result

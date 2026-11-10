@@ -58,7 +58,8 @@ def make(cfg=None, *, instance=InstanceInfo("synthetic", "development"), profile
     sink = MemoryAuditSink()
     gate = HostedGate(lambda: instance, case_source_from_cases(cases), build_profile=profile)
     t = transport or FakeTransport()
-    g = Gateway(Registry(raw), gate=gate, sink=sink, profile=profile, environ=env if env is not None else {"TEST_KEY": SECRET_VALUE}, transport=t)
+    g = Gateway(Registry(raw), gate=gate, sink=sink, profile=profile, environ=env if env is not None else {"TEST_KEY": SECRET_VALUE}, transport=t,
+                sleep=lambda d: None)
     return g, sink, t
 
 

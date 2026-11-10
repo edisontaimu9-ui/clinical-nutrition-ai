@@ -42,12 +42,12 @@ class Gateway:
     def __init__(self, registry: Registry, *, gate: Optional[HostedGate] = None, sink: Optional[AuditSink] = None,
                  profile: str = "synthetic-dev", environ: Mapping[str, str] = os.environ, transport: Optional[object] = None,
                  clock: Callable[[], float] = None, canaries: tuple = ("CANARY-7731",),
-                 sleep: Callable[[float], None] = None, progress: Optional[Callable[[str], None]] = None):
+                 sleep: Callable[[float], None] = None, progress: Optional[Callable[[str], None]] = None, capture_raw: bool = False):
         import time
         self.registry, self.gate, self.sink = registry, gate, sink or MemoryAuditSink()
         self.profile, self.environ, self.transport = profile, environ, transport
         self.clock, self.canaries = clock or time.time, canaries
-        self.sleep, self.progress = sleep or time.sleep, progress
+        self.sleep, self.progress, self.capture_raw = sleep or time.sleep, progress, capture_raw
         self._cooldown: Dict[str, float] = {}               # backend id -> time before which no request is sent (after a final HTTP 429)
         self._backends: Dict[str, Backend] = {}
         self._trackers: Dict[str, SpendTracker] = {}
@@ -95,10 +95,22 @@ class Gateway:
         backoff, capped); when they are exhausted the backend goes into cooldown and no further requests are sent."""
         retry = cfg.get("retry", {})
         max_retries = int(retry.get("max_429_retries", 2)) if cfg.get("mode") == "hosted" else 0
-        n = 0
+        n = t = 0
         while True:
             try:
                 return backend.complete(system, text, params=params)
+            except (BackendUnavailable, BackendTimeout) as e:
+                # a transient network failure (dropped connection, timeout) gets a small, controlled retry; then it fails safe
+                max_t = int(retry.get("max_transient_retries", 2)) if cfg.get("mode") == "hosted" else 0
+                if t >= max_t:
+                    raise
+                delay = min(float(retry.get("backoff_s", 5)) * 2 ** t, float(retry.get("max_wait_s", 90)))
+                t += 1
+                if self.progress:
+                    self.progress(f"{e.code}: retry {t}/{max_t} after {delay:.0f}s")
+                self.sleep(delay)
+                if tracker:
+                    self._reserve(tracker, max(1, len(system + text) // 3), int(params.get("max_output_tokens", 1500)), cfg)
             except RateLimited as e:
                 if n >= max_retries:
                     self._cooldown[bid] = self.clock() + float(retry.get("cooldown_s", 300))
@@ -156,6 +168,8 @@ class Gateway:
                 if tracker:
                     tracker.record(comp.input_tokens, comp.output_tokens)
                 res.output_sha256 = sha(comp.text or "")
+                if self.capture_raw:
+                    res.raw_text = comp.text
                 parsed, problem = self._parse(comp.text, schema)
                 if parsed is not None:
                     break

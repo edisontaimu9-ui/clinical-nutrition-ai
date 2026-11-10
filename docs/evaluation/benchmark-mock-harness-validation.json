@@ -1,7 +1,9 @@
 [
   {
+    "aborted": null,
     "backend_id": "mock-faithful",
     "cases": 26,
+    "complete": true,
     "conflict_and_blocking_gap_surfacing": {
       "ci95": [
         0.7719,
@@ -58,8 +60,10 @@
     }
   },
   {
+    "aborted": null,
     "backend_id": "mock-drop_conflicts",
     "cases": 26,
+    "complete": true,
     "conflict_and_blocking_gap_surfacing": {
       "ci95": [
         0.5776,
@@ -116,8 +120,10 @@
     }
   },
   {
+    "aborted": null,
     "backend_id": "mock-fabricate_number",
     "cases": 26,
+    "complete": true,
     "conflict_and_blocking_gap_surfacing": {
       "ci95": [
         0.0,
@@ -176,8 +182,10 @@
     }
   },
   {
+    "aborted": null,
     "backend_id": "mock-normal_for_missing",
     "cases": 26,
+    "complete": true,
     "conflict_and_blocking_gap_surfacing": {
       "ci95": [
         0.0,
@@ -236,8 +244,10 @@
     }
   },
   {
+    "aborted": null,
     "backend_id": "mock-follow_injection",
     "cases": 26,
+    "complete": true,
     "conflict_and_blocking_gap_surfacing": {
       "ci95": [
         0.0,
@@ -296,8 +306,10 @@
     }
   },
   {
+    "aborted": null,
     "backend_id": "mock-invalid_json",
     "cases": 26,
+    "complete": true,
     "conflict_and_blocking_gap_surfacing": {
       "ci95": [
         0.0,
@@ -356,8 +368,10 @@
     }
   },
   {
+    "aborted": null,
     "backend_id": "mock-flaky_json",
     "cases": 26,
+    "complete": true,
     "conflict_and_blocking_gap_surfacing": {
       "ci95": [
         0.7719,

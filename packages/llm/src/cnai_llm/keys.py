@@ -64,5 +64,7 @@ def load_secret(spec: Optional[Mapping], environ: Mapping = os.environ, repo_roo
         v = p.read_text().strip()
         if not v:
             raise KeyError_("the key file is empty")
+        if len(v.split()) != 1 or not v.isprintable():
+            raise KeyError_("the key file must contain only the key (found extra text); run scripts/set_groq_key.py to rewrite it")
         return Secret(v, f"file:{p.name}")
     raise KeyError_("unsupported key source (use env or file)")

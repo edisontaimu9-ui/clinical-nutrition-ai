@@ -83,6 +83,7 @@ class GatewayResult:
     output_tokens: int = 0
     latency_s: float = 0.0
     violations: list = field(default_factory=list)
+    raw_text: Optional[str] = field(default=None, repr=False)     # only when Gateway(capture_raw=True), for synthetic-data diagnostics
 
     @property
     def ok(self) -> bool:
