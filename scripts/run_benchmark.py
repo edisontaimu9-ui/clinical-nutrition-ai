@@ -3,8 +3,11 @@
                               python scripts/run_benchmark.py --backend ID  (a configured hosted backend; synthetic corpus only)
 Writes docs/evaluation/benchmark-<label>.json and .md. A mock run proves the HARNESS discriminates; it says nothing about any model."""
 import argparse
+import hashlib
 import json
+import os
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -43,6 +46,7 @@ def main():
     ap.add_argument("--backend")
     ap.add_argument("--repeats", type=int, default=1)
     ap.add_argument("--limit", type=int, default=0, help="run only the first N cases (a short diagnostic run; never counts as a result)")
+    ap.add_argument("--fresh", action="store_true", help="ignore and delete any saved progress for this backend")
     ap.add_argument("--diagnose", action="store_true", help="save raw model outputs and violations for the SYNTHETIC corpus to diagnostics/")
     a = ap.parse_args()
     cases, items = corpus.load_cases()
@@ -54,7 +58,35 @@ def main():
     if a.backend:
         log = lambda m: print(m, file=sys.stderr, flush=True)       # ids and status only; never prompt, output or keys
         g = Gateway(reg, gate=gate, sink=MemoryAuditSink(), progress=log, capture_raw=a.diagnose)
-        reports = [evaluation.evaluate(g, a.backend, items, repeats=a.repeats, progress=log)]
+        # Progress is saved after every completed call, so a dropped connection, a rate limit or a closed app costs nothing:
+        # run the same command again and it continues. Saved progress is discarded if the verifier, prompt, model or corpus changed.
+        ckdir = ROOT / "diagnostics"
+        ckdir.mkdir(exist_ok=True)
+        ck = ckdir / f"{a.backend}-progress{'-limit' + str(a.limit) if a.limit else ''}.json"
+        fp = hashlib.sha256("|".join([
+            (ROOT / "packages/llm/src/cnai_llm/summary_task.py").read_text(), (ROOT / "packages/llm/src/cnai_llm/evaluation.py").read_text(),
+            (ROOT / "packages/llm/prompts/assessment_summary_v0.yaml").read_text(), json.dumps(reg.config(a.backend), sort_keys=True, default=str),
+            ",".join(c for c, _ in items), str(a.repeats)]).encode()).hexdigest()
+        done, usage = {}, None
+        if ck.exists() and not a.fresh:
+            saved = json.loads(ck.read_text())
+            if saved.get("fingerprint") == fp:
+                done, usage = saved["records"], saved.get("usage")
+                log(f"resuming: {len(done)} runs already completed")
+            else:
+                log("saved progress ignored: the verifier, prompt, model or corpus has changed since it was written")
+        day = int(time.time() // 86400)
+        if usage and usage.get("day") == day:
+            g._preload[a.backend] = (day, usage["calls"], usage["tokens"])
+            log(f"today's earlier usage restored: {usage['calls']} calls, {usage['tokens']} tokens")
+
+        def checkpoint(k, rec):
+            done[k] = rec
+            u = g.usage(a.backend)
+            tmp = ck.with_suffix(".tmp")
+            tmp.write_text(json.dumps({"fingerprint": fp, "records": done, "usage": {"day": u[0], "calls": u[1], "tokens": u[2]} if u else None}))
+            os.replace(tmp, ck)
+        reports = [evaluation.evaluate(g, a.backend, items, repeats=a.repeats, progress=log, done=done, on_record=checkpoint)]
         label, note = f"hosted {a.backend}", "Synthetic corpus only. Provider terms, pinned version and spend caps must be recorded before this can run."
         diag = reports[0].pop("diagnostics", [])
         if a.diagnose and diag:
@@ -66,7 +98,8 @@ def main():
             note += f" PARTIAL: only the first {a.limit} cases were run; this is a diagnostic, not a result."
             reports[0]["complete"] = False
         if reports[0]["aborted"]:
-            note += f" **INCOMPLETE: the run stopped at '{reports[0]['aborted']}'. No benchmark result exists; no gate is met.**"
+            note += (f" **INCOMPLETE: the run stopped at '{reports[0]['aborted']}'. No benchmark result exists; no gate is met. "
+                     "Run the same command again to continue where it stopped.**")
     else:
         reports = []
         for b in ("faithful", "drop_conflicts", "fabricate_number", "normal_for_missing", "follow_injection", "invalid_json", "flaky_json"):

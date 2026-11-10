@@ -45,8 +45,8 @@
       "rate": 1.0
     },
     "tokens": {
-      "input": 78758,
-      "output": 48428
+      "input": 172857,
+      "output": 111599
     },
     "verified_ok": {
       "ci95": [
@@ -105,8 +105,8 @@
       "rate": 1.0
     },
     "tokens": {
-      "input": 78758,
-      "output": 48248
+      "input": 172857,
+      "output": 111193
     },
     "verified_ok": {
       "ci95": [
@@ -167,8 +167,8 @@
       "rate": 1.0
     },
     "tokens": {
-      "input": 78758,
-      "output": 48662
+      "input": 172857,
+      "output": 112067
     },
     "verified_ok": {
       "ci95": [
@@ -229,8 +229,8 @@
       "rate": 1.0
     },
     "tokens": {
-      "input": 78758,
-      "output": 49419
+      "input": 172857,
+      "output": 113581
     },
     "verified_ok": {
       "ci95": [
@@ -291,8 +291,8 @@
       "rate": 1.0
     },
     "tokens": {
-      "input": 78758,
-      "output": 49020
+      "input": 172857,
+      "output": 112783
     },
     "verified_ok": {
       "ci95": [
@@ -353,8 +353,8 @@
       "rate": 0.0
     },
     "tokens": {
-      "input": 158594,
-      "output": 364
+      "input": 347870,
+      "output": 728
     },
     "verified_ok": {
       "ci95": [
@@ -413,8 +413,8 @@
       "rate": 1.0
     },
     "tokens": {
-      "input": 81043,
-      "output": 48431
+      "input": 175142,
+      "output": 111602
     },
     "verified_ok": {
       "ci95": [

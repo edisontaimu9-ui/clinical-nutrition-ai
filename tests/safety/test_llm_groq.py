@@ -183,7 +183,7 @@ def test_transport_reads_retry_after_header(monkeypatch):
 def test_benchmark_without_a_key_runs_nothing_and_reports_incomplete():
     g = gw(FakeTransport(), env={})
     rep = ev.evaluate(g, "groq", ITEMS)
-    assert rep["aborted"] == "key_unavailable" and rep["runs"] == 1 and not any(ev.meets_gates(rep).values())
+    assert rep["aborted"] == "key_unavailable" and rep["runs"] == 0 and not any(ev.meets_gates(rep).values())
 
 
 def test_pacing_refuses_waits_longer_than_the_configured_maximum():
@@ -235,7 +235,7 @@ def test_benchmark_halts_on_a_provider_rejection_such_as_a_bad_key():
             raise BackendProtocolError("provider status 401")
     t = Rejecting()
     rep = ev.evaluate(gw(t), "groq", ITEMS)
-    assert rep["aborted"] == "backend_protocol_error" and len(t.calls) == 1 and not rep["complete"]
+    assert rep["aborted"] == "backend_protocol_error" and len(t.calls) == 1 and not rep["complete"] and rep["runs"] == 0
 
 
 def test_provider_error_tag_is_reported_but_the_message_text_is_not(monkeypatch):
@@ -278,7 +278,7 @@ def test_transport_sends_a_generic_user_agent_not_the_urllib_default(monkeypatch
     assert seen["user-agent"] == "cnai-llm-gateway/0.1" and "@" not in seen["user-agent"] and "python" not in seen["user-agent"].lower()
 
 
-def test_transient_network_failures_get_two_controlled_retries_then_fail_safe():
+def test_transient_network_failures_get_controlled_retries_then_fail_safe():
     from cnai_llm.types import BackendUnavailable
 
     class Down(FakeTransport):
@@ -297,7 +297,7 @@ def test_transient_network_failures_get_two_controlled_retries_then_fail_safe():
     t = Down(99)
     g = gw(t, cfg_edit=loose)
     r = g.generate(req(), "groq")
-    assert r.reason == "backend_unavailable" and len(t.calls) == 3
+    assert r.reason == "backend_unavailable" and len(t.calls) == 5 and g.sleeps == [10, 20, 40, 80]     # 4 controlled retries
 
 
 def test_verifier_reports_what_matched_and_diagnostics_keep_raw_text_only_when_asked():
@@ -312,3 +312,36 @@ def test_verifier_reports_what_matched_and_diagnostics_keep_raw_text_only_when_a
     assert "raw_text" not in repr(r)
     rep = ev.evaluate(g, "groq", ITEMS[:1])
     assert rep["diagnostics"] and rep["diagnostics"][0]["raw_output"]
+
+
+def test_interrupted_run_resumes_without_repeating_completed_calls_and_restores_usage():
+    class Dropper(FakeTransport):
+        """Works for the first 3 calls, then the network goes away (every retry fails)."""
+        def post_json(self, url, headers, body, timeout):
+            if len(self.calls) >= 3:
+                from cnai_llm.types import BackendUnavailable
+                self.calls.append((url, headers, body))
+                raise BackendUnavailable("provider unreachable")
+            return super().post_json(url, headers, body, timeout)
+    saved = {}
+    items = ITEMS[:3]
+    g1 = gw(Dropper(), cfg_edit=loose)
+    r1 = ev.evaluate(g1, "groq", items, on_record=lambda k, rec: saved.__setitem__(k, rec))
+    assert r1["aborted"] == "backend_unavailable" and not r1["complete"] and len(saved) == 3
+    t2 = FakeTransport()
+    g2 = gw(t2, cfg_edit=loose)
+    r2 = ev.evaluate(g2, "groq", items, done=saved, on_record=lambda k, rec: saved.__setitem__(k, rec))
+    assert r2["complete"] and r2["runs"] == 3 and len(t2.calls) == 3            # only the 3 injection runs were sent
+    assert len(saved) == 6
+    day, calls, tokens = g2.usage("groq")
+    g3 = gw(FakeTransport(), cfg_edit=loose)
+    g3._preload["groq"] = (day, 5, 100)
+    g3.generate(req(), "groq")
+    assert g3.usage("groq")[1] == 6 and g3.usage("groq")[2] >= 100
+
+
+def test_usage_from_another_day_is_not_restored():
+    g = gw(FakeTransport(), cfg_edit=loose)
+    g._preload["groq"] = (-5, 300, 140000)                 # yesterday's counters must not carry over
+    g.generate(req(), "groq")
+    assert g.usage("groq")[1] == 1

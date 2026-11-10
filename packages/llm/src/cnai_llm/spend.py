@@ -47,6 +47,16 @@ class SpendTracker:
         while self._tok and now - self._tok[0][0] >= 60:
             self._tok.popleft()
 
+    def preload(self, day: int, calls: int, tokens: int) -> None:
+        """Restore today's usage after a restart (the provider's daily limit does not reset when our process does)."""
+        self._roll()
+        if day == self._day:
+            self._day_calls, self._day_tokens = max(0, int(calls)), max(0, int(tokens))
+
+    def usage(self):
+        self._roll()
+        return self._day, self._day_calls, self._day_tokens
+
     def cost(self, in_tokens: int, out_tokens: int) -> float:
         return in_tokens / 1000 * self.b.price_in_per_1k + out_tokens / 1000 * self.b.price_out_per_1k
 

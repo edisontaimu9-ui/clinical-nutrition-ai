@@ -48,6 +48,7 @@ class Gateway:
         self.profile, self.environ, self.transport = profile, environ, transport
         self.clock, self.canaries = clock or time.time, canaries
         self.sleep, self.progress, self.capture_raw = sleep or time.sleep, progress, capture_raw
+        self._preload: Dict[str, tuple] = {}                 # backend id -> (day, calls, tokens) restored from a checkpoint
         self._cooldown: Dict[str, float] = {}               # backend id -> time before which no request is sent (after a final HTTP 429)
         self._backends: Dict[str, Backend] = {}
         self._trackers: Dict[str, SpendTracker] = {}
@@ -64,7 +65,13 @@ class Gateway:
             if not b:
                 raise BudgetExceeded("no budget configured for this hosted backend")
             self._trackers[bid] = SpendTracker(Budget(**b), clock=self.clock)
+            if bid in self._preload:
+                self._trackers[bid].preload(*self._preload[bid])
         return self._trackers[bid]
+
+    def usage(self, bid: str):
+        t = self._trackers.get(bid)
+        return t.usage() if t else None
 
     def _audit(self, action, run_id, outcome, **details):
         try:

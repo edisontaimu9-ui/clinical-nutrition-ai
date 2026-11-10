@@ -90,6 +90,15 @@ def _dec(s):
         return None
 
 
+_UNI = {ord(c): "-" for c in "\u2010\u2011\u2012\u2013\u2014\u2015\u2212"}
+_UNI.update({ord(c): " " for c in "\u00a0\u202f\u2009\u200a\u2007\u2008"})
+
+
+def _norm(text: str) -> str:
+    """Models often emit typographic hyphens and narrow spaces ('2025\u201111\u201116', '70\u202fkg'); map them to ASCII before any check."""
+    return text.translate(_UNI)
+
+
 def _numbers(text: str) -> List[Decimal]:
     return [d for d in (_dec(m) for m in _NUM.findall(_DATE.sub(" ", text))) if d is not None]
 
@@ -100,6 +109,7 @@ def verify(output: Dict[str, Any], inputs: Dict[str, Any], canaries: tuple = ())
     usable_obs = {e["observation_id"]: e for e in inputs["present_elements"]}
     usable_obs.update({e["observation_id"]: e for e in inputs["declared_normal_elements"] if e.get("observation_id")})
     calcs = {c["calculation_id"]: c for c in inputs["calculations"]}
+    known_dates = set(_DATE.findall(json.dumps(inputs)))
     calc_input_ids = {i for c in inputs["calculations"] for i in c["input_observation_ids"]}   # e.g. the earlier weight in a change calculation
     finds = {f["finding_id"]: f for f in inputs["findings"]}
     unusable_labels = {e["label"].lower(): e["element_code"] for e in inputs["not_assessed_elements"] + inputs["other_state_elements"]}
@@ -123,7 +133,7 @@ def verify(output: Dict[str, Any], inputs: Dict[str, Any], canaries: tuple = ())
         v.append({"code": code, "statement": sid, "detail": detail})
 
     for st in output.get("statements", []):
-        sid, kind, text = st["id"], st["kind"], st["text"]
+        sid, kind, text = st["id"], st["kind"], _norm(st["text"])
         obs, cal, fnd = st.get("observation_ids", []), st.get("calculation_ids", []), st.get("finding_ids", [])
         codes = st.get("element_codes", [])
         if len(text) > MAX_TEXT:
@@ -202,6 +212,9 @@ def verify(output: Dict[str, Any], inputs: Dict[str, Any], canaries: tuple = ())
             if fe:
                 allowed += _numbers(fe["message"])
         allowed_abs = {abs(a) for a in allowed if a is not None}
+        for d in _DATE.findall(text):
+            if d not in known_dates:
+                bad("unsupported_date", sid, d)
         for n in _numbers(text):                                  # magnitude is checked; direction has its own check above
             if abs(n) not in allowed_abs:
                 bad("unsupported_number", sid, str(n))

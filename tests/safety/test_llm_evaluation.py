@@ -132,3 +132,13 @@ def test_percent_change_direction_must_match_the_sign():
     bad = _stmt("calculation", "Weight is 0.71 percent higher than the previous weight.", calculation_ids=["calc:pct_weight_change_vs_previous"])
     assert [x["code"] for x in st.verify(ok, inp, ())] == []
     assert [x["code"] for x in st.verify(bad, inp, ())] == ["direction_contradiction"]
+
+
+def test_typographic_hyphens_and_dates_are_normalised_and_unknown_dates_flagged():
+    inp = _INP["SYN-ADULT-001"]
+    date = inp["assessment_date"]
+    ok = _stmt("observation", f"On {date.replace('-', chr(0x2011))} standing height was 175{chr(0x202f)}cm.", observation_ids=["o02"],
+               element_codes=["anthro.height_cm"])
+    assert st.verify(ok, inp, ()) == []
+    bad = _stmt("clinician_prompt", "Last measured on 1999-01-02.")
+    assert [x["code"] for x in st.verify(bad, inp, ())] == ["unsupported_date"]
